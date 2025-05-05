@@ -1,0 +1,239 @@
+body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    font-size: 12px;
+}
+
+p {
+    margin: 0;
+}
+
+a {
+    color: #1980ca !important;
+}
+
+a:hover {
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+
+.table td, .table th {
+    padding: .45rem;
+}
+
+.main-window {
+    padding: 20px;
+}
+
+.form-control {
+    font-size: 0.8rem;
+}
+
+.btn {
+    font-size: 0.8rem;
+    padding: 2px 12px;
+    border-radius: 0;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Config window */
+.config-window {
+    padding: 40px;
+}
+
+
+/* Account window */
+.account-window {
+    padding: 40px 20px;
+}
+
+/* Index window */
+.remove_account {
+    color: #d44950;
+    cursor: pointer;
+}
+
+/* Update style */
+body {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 20px;
+    font-family: sans-serif;
+    background-color: #FFF;
+    text-align: center;
+}
+
+#notification {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 200px;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: white;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+    z-index: 9999999;
+}
+
+.prosess {
+    width: 100%;
+    float: left;
+    margin-bottom: 10px;
+    background: #dad6d6;
+}
+
+.prosess-item {
+    height: 5px;
+    background: #4de01f;
+    width: 0%;
+}
+
+.hidden {
+    display: none;
+}
+p.radio-check{
+    text-align: left;
+    width: 100%;
+    float: left;
+    margin-bottom: 10px;
+}
+p.radio-check input{
+    float: left;
+}
+p.radio-check span{
+    float: left;
+    margin-left: 10px;
+    margin-top: -2px;
+}
+.form-group label{
+    text-align: center;
+    width: 100%;
+    float: left;
+}
+.checkcontainer {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 15px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    text-align: left !important;
+    width: 50% !important;
+    float: left;
+}
+.checkcontainer input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+.radiobtn {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 20px;
+    width: 20px;
+    background-color: #e2e2e2;
+    border-radius: 50%;
+}
+
+.checkcontainer input:checked ~ .radiobtn {
+    background-color: #2196F3;
+}
+.checkcontainer input:checked ~ .radiobtn:after {
+    display: block;
+}
+
+.checkcontainer .radiobtn:after {
+    top: 6px;
+    left: 6px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+}
+.radiobtn:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+.checkcontainer input:checked ~ .checkmark {
+    background-color: #2196F3;
+}
+.checkcontainer input:checked ~ .checkmark:after {
+    display: block;
+}
+.checkcontainer .checkmark:after {
+    left: 10px;
+    top: 6px;
+    width: 7px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #c3c0c0;
+}
+.checkcontainer.checkbox{
+    width: 25px !important;
+    margin: 0 auto;
+    float: none;
+}
+.margin_account{
+    margin-top: 20px;
+}
+.checksale_inqueue,.upload_inqueue,.checksale_running,.upload_running{
+    display: none;
+}
+
+/* ------------------- */
+.config-full {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 100%;
+}
+
+.console-log {
+    display: block;
+    overflow-y: hidden;
+}
+
+.console-log:hover {
+    overflow-y: scroll;
+}
+
+.console-log p {
+    text-align: left;
+    color: green;
+}
+
+.console-log p.error {
+    color: red;
+}
+#import_account {
+    width: 110px;
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+}

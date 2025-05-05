@@ -1,0 +1,8 @@
+directories:
+  output: dist
+  buildResources: build
+appId: kdp.merchvn.net
+productName: KDP Merch Auto
+win:
+  target: portable
+electronVersion: 6.0.2

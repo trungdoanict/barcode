@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Account</title>
+	<link rel="stylesheet" href="./../node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="./../public/css/style.css">
+</head>
+	
+<body class="account-window">
+	
+	<form id="create_account" method="POST" class="col-10 offset-1" action="">
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Alias Name</label>
+		    <input type="text" name="name" class="form-control"  placeholder="Enter alias name">
+	  	</div>
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Email address</label>
+		    <input type="email" name="email" class="form-control"  placeholder="Enter email">
+	  	</div>
+	  	<div class="form-group">
+		    <label for="exampleInputEmail1">Password</label>
+		    <input type="password" name="password" class="form-control"  placeholder="Password">
+	  	</div>
+	  	<div class="form-group">
+		    <label for="exampleInputEmail1">Auto Check Sales</label>
+
+		    <label class="checkcontainer">Yes
+			  <input type="radio" name="auto_checksale" value="1" checked="true" />
+			  <span class="radiobtn"></span>
+			</label>
+			<label class="checkcontainer">No
+			  <input type="radio" name="auto_checksale" value="0" />
+			  <span class="radiobtn"></span>
+			</label>
+
+		  
+		    
+		    
+		    
+	  	</div>
+	  	<div class="form-group">
+		    <label for="exampleInputEmail1">Profile Path Chorme	</label>
+		    <input type="text" name="profile_path" class="form-control"  placeholder="C:/Users/PC/AppData/Local/Google/Chrome/User Data/Default">
+	  	</div>
+	  	
+		<button class="btn btn-success" type="submit">Create Account</button>
+	</form>
+</body>
+<script type="text/javascript">
+	const { ipcRenderer } = require('electron');
+    const $ = require('jquery');
+    const config = require('./../config.js');
+
+    const { encryptStringWithRsaPublicKey, decryptStringWithRsaPrivateKey } = require('./../public/js/encryption');
+
+    const DB = require('./../public/js/db.js');
+	const AccountTable = new DB('kdb_account');
+   	
+	$("#create_account").on('submit',function(){
+		var name = $('#create_account input[name="name"]').val();
+		var email = $('#create_account input[name="email"]').val();
+		var password = $('#create_account input[name="password"]').val();
+		var profile_path = $('#create_account input[name="profile_path"]').val();
+		var auto_checksale = $("#create_account input[name='auto_checksale']:checked").val();
+		if (name == '')
+		{
+			var data_send = {
+        		'type' : 'error',
+		        'title' : 'Notification',
+		        'message' : 'Invalid  Name.',
+		        'detail' : ''
+        	}
+        	ipcRenderer.send('show_dialog',data_send);
+			$('#create_account input[name="name"]').focus();
+			return false;
+		}
+		if (email == '')
+		{
+			var data_send = {
+        		'type' : 'error',
+		        'title' : 'Notification',
+		        'message' : 'Invalid  Email.',
+		        'detail' : ''
+        	}
+        	ipcRenderer.send('show_dialog',data_send);
+			$('#create_account input[name="email"]').focus();
+			return false;
+		}
+		if (password == '')
+		{
+			var data_send = {
+        		'type' : 'error',
+		        'title' : 'Notification',
+		        'message' : 'Invalid Password',
+		        'detail' : ''
+        	}
+        	ipcRenderer.send('show_dialog',data_send);
+			$('#create_account input[name="password"]').focus();
+			return false;
+		}
+		if (profile_path == '')
+		{
+			var data_send = {
+        		'type' : 'error',
+		        'title' : 'Notification',
+		        'message' : 'Invalid Profile Path',
+		        'detail' : ''
+        	}
+        	ipcRenderer.send('show_dialog',data_send);
+			$('#create_account input[name="profile_path"]').focus();
+			return false;
+		}
+		
+		AccountTable.insert({
+			'email' : email,
+            'name' : name,
+            'password' : encryptStringWithRsaPublicKey(password).toString(),
+            'profile_path' : profile_path,
+            'status_upload' : 0,
+            'status_checksale' : 0,
+            'status_editdesign' : 0,
+            //'codeid' : localStorage.getItem('codeid'),
+            'auto_checksale' : auto_checksale
+		},function(result,data){
+		    if(result)
+		    {
+		    	$.ajax({
+		            url : config.host+"/account/create-account",
+		            type : "post",
+		            dataType:"text",
+		            data : {
+						'email' : email,
+			            'name' : name,
+			            'codeid' : localStorage.getItem('codeid'),
+			            'auto_checksale' : auto_checksale,
+			            'id' : data.id
+					},
+		            success : function (result){
+
+		            	var data_send = {
+		            		'type' : 'info',
+					        'title' : 'Notification',
+					        'message' : 'Account successfully created',
+					        'detail' : ''
+		            	}
+		            	ipcRenderer.send('show_dialog',data_send);
+		            	var data_append = {
+		            		"email": email,
+		            		"password": encryptStringWithRsaPublicKey(password).toString(),
+					        "name": name,
+					        "profile_path": profile_path,
+					        "auto_checksale": auto_checksale,
+					        "id": data.id,
+					        "status_upload" : 0,
+				            "status_checksale" : 0,
+				            "status_editdesign" : 0
+		            	}
+		            	ipcRenderer.send('hiden_modal_create_account',data_append);
+		            },
+		            error : function (error){
+		            	AccountTable.deleteRow({
+							'email' : email
+						},function(result,data){
+		            		if(result == true)
+		            		{
+		            			var data_send = {
+				            		'type' : 'error',
+							        'title' : 'Notification',
+							        'message' : $.parseJSON(error.responseText).message,
+							        'detail' : ''
+				            	}
+				            	ipcRenderer.send('show_dialog',data_send);
+		            		}
+		            	})
+		            	
+		            	
+		            }
+		        });
+		    }
+		    else
+		    {
+		    	var data_send = {
+            		'type' : 'error',
+			        'title' : 'Notification',
+			        'message' : data,
+			        'detail' : ''
+            	}
+            	ipcRenderer.send('show_dialog',data_send);
+		    }
+		})
+			
+		return false;
+	})
+</script>
+</html>

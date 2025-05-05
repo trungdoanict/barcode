@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Account</title>
+	<link rel="stylesheet" href="./../node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="./../public/css/style.css">
+</head>
+	
+<body class="account-window">
+	
+	<form id="edit_account" method="POST" class="col-10 offset-1" action="">
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Alias Name</label>
+		    <input id="edit_alias_name" disabled="disabled" type="text" name="name" class="form-control"  placeholder="Loading...">
+	  	</div>
+		<div class="form-group">
+		    <label for="exampleInputEmail1">Email address</label>
+		    <input id="edit_email" disabled="disabled" type="email" name="email" class="form-control"  placeholder="Loading...">
+	  	</div>
+	  	<div class="form-group">
+		    <label for="exampleInputEmail1">Password</label>
+		    <input id="edit_password" type="password" name="password" class="form-control"  placeholder="Password">
+	  	</div>
+	  	<div class="form-group">
+		    <label for="exampleInputEmail1">Profile Path Chorme	</label>
+		    <input id="edit_profile" type="text" name="profile_path" class="form-control"  placeholder="C:/Users/PC/AppData/Local/Google/Chrome/User Data/Default">
+	  	</div>
+	  	
+		<button class="btn btn-success" type="submit">Save</button>
+	</form>
+	<script type="text/javascript">
+		const { ipcRenderer } = require('electron');
+		const $ = require('jquery');
+		const { encryptStringWithRsaPublicKey, decryptStringWithRsaPrivateKey } = require('./../public/js/encryption');
+
+		const DB = require('./../public/js/db.js');
+		const AccountTable = new DB('kdb_account');
+
+		let account_id;
+
+		ipcRenderer.on('edit_account_data', (event, account_data) => {
+			account_id = account_data.id;
+		    $('#edit_alias_name').val(account_data.name);
+		    $('#edit_email').val(account_data.email);
+		    $('#edit_password').val(decryptStringWithRsaPrivateKey(account_data.password));
+		    $('#edit_profile').val(account_data.profile_path);
+		});
+
+		$("#edit_account").on('submit', function(){
+			var password = $('#edit_account input[name="password"]').val();
+			var profile_path = $('#edit_account input[name="profile_path"]').val();
+
+			if (password == '')
+			{
+				var data_send = {
+	        		'type' : 'error',
+			        'title' : 'Notification',
+			        'message' : 'Invalid Password',
+			        'detail' : ''
+	        	}
+	        	ipcRenderer.send('show_dialog',data_send);
+				$('#edit_account input[name="password"]').focus();
+				return false;
+			}
+
+			if (profile_path == '')
+			{
+				var data_send = {
+	        		'type' : 'error',
+			        'title' : 'Notification',
+			        'message' : 'Invalid Profile Path',
+			        'detail' : ''
+	        	}
+	        	ipcRenderer.send('show_dialog',data_send);
+				$('#edit_account input[name="profile_path"]').focus();
+				return false;
+			}
+
+			let where = {
+			  "id": account_id
+			};
+			 
+			let set = {
+			  "password": encryptStringWithRsaPublicKey(password).toString(),
+			  "profile_path" : profile_path
+			}
+			 
+			AccountTable.updateRow(where, set, (succ, msg) => {
+			  // succ - boolean, tells if the call is successful
+			  console.log("Success: " + succ);
+			  console.log("Message: " + msg);
+			  let returnObj = {
+			  	id: account_id,
+			  	password: encryptStringWithRsaPublicKey(password).toString(),
+			  	profile_path: profile_path
+			  }
+
+			  if (succ) {
+			  	ipcRenderer.send('hide_modal_edit_account', returnObj);
+			  }
+			});
+
+			return false;
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+
+<head>
+    <title>KDP Merch Auto</title>
+    <link rel="stylesheet" href="./node_modules/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="./public/css/style.css">
+    
+    
+</head>
+
+<body class="loading">
+    <div class="row main-window">
+        <div class="col-12">
+            <div class="row">
+                <div class="col-12">
+                    <input type="hidden" name="codeid" />
+                    <div class="text-right">
+                        <p id="version"></p>
+                        <a id="update-version">
+                            Check update
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="text-center">Config</h3>
+                    <div class="row">
+                        <div class="col-12 text-right">
+                            <a href="javascript:void(0)" style="display: none;" id="show-log-btn">Show Logs</a>
+                            <a href="javascript:void(0)" id="hide-log-btn">Hide Logs</a>
+                        </div>
+                    </div>
+                    <form id="config_form" method="POST" class="" action="">
+                        <div class="row">
+                            <div id="config-box" class="col-6">
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1" class="text-left">Executable Path</label>
+                                    <input value="" type="text" name="pathchrome" class="form-control" placeholder="Path Chrome">
+                                </div>
+                                <div class="row">
+                                    <div class="col-5">
+                                        <div class="form-group">
+                                            <label for="botSpeed" class="text-left">Bot Speed (20 - 120)</label>
+                                            <input value="" type="text" name="botspeed" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="col-7">
+                                        <div class="form-group">
+                                            <label for="uploaddataname" class="text-left">Upload Excel File Name</label>
+                                            <input style="width: 200px;float:left;margin-right:3px;" value="" type="text" name="uploaddataname" class="form-control">
+                                            <span style="float: left;font-size: 20px;line-height: 49px;">.xlsx</span>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="uploadtimeout" class="text-left">File Upload Timeout (minutes)</label>
+                                            <input value="" type="text" name="uploadtimeout" class="form-control">
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="reuploadTimer" class="text-left">Reupload Timer (minutes)</label>
+                                            <input value="" type="text" name="reuploadTimer" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="form-group" style="float:left;margin-top:29px;">                               
+                                            <label class="checkcontainer checkbox" style="float: left;"><input id="useRememberPassword" name="useRememberPassword" value="0" type="checkbox"> <span class="checkmark"></span> </label>
+                                            <label style="margin-left: 30px; padding-top: 3px;" for="useRememberPassword" class="text-left">Use Remember Password</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="form-group">
+                                            <label for="unpublishtimer" class="text-left">Unpublish Time</label>
+                                            <select id="unpublish-hour" style="width: 30%; margin-right: 2%; float: left;" class="form-control">
+                                                <option value="0">00</option>
+                                                <option value="1">01</option>
+                                                <option value="2">02</option>
+                                                <option value="3">03</option>
+                                                <option value="4">04</option>
+                                                <option value="5">05</option>
+                                                <option value="6">06</option>
+                                                <option value="7">07</option>
+                                                <option value="8">08</option>
+                                                <option value="9">09</option>
+                                                <option value="10">10</option>
+                                                <option value="11">11</option>
+                                                <option value="12">12</option>
+                                                <option value="13">13</option>
+                                                <option value="14">14</option>
+                                                <option value="15">15</option>
+                                                <option value="16">16</option>
+                                                <option value="17">17</option>
+                                                <option value="18">18</option>
+                                                <option value="19">19</option>
+                                                <option value="20">20</option>
+                                                <option value="21">21</option>
+                                                <option value="22">22</option>
+                                                <option value="23">23</option>
+                                            </select>
+                                            <input id="unpublish-date" style="width: 68%" value="" type="date" name="unpublishdate" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 console-log">
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1" class="text-left">Logs</label>
+                                </div>
+                                <div id="console-log">
+                                    <div v-for="(item, index) in logs">
+                                        <p v-bind:class="{error: !item.status}">{{item.text}}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!--div class="form-group">
+                            <label for="exampleInputEmail1" class="text-left">Auto Check Sales</label>
+                            <input value="00:00" type="text" name="auto_checksale" class="form-control" placeholder="HH:MM">
+                        </div-->
+                        <br/><br/>
+                        <span class="text-center">Click here to update config</span><br/>
+                        <button class="btn btn-success" type="submit">Save Config</button>
+                    </form>
+                    <hr/>
+                </div>
+                
+                <div class="col-12" >
+                    
+                    <h3 class="text-center margin_account">Manage Accounts</h3>
+                    <table class="table  table-striped table-bordered" id="aplication">
+                        <thead>
+                            <tr>
+                                <th class="text-center">STT</th>
+                                <th>Alias Name</th>
+                                <th>Email</th>
+
+                                <th>Profile Path</th>
+                                <th>Upload</th>
+                                <th>Check Sales</th>
+                                <!-- <th>Edit Design</th> -->
+                                <th>Unpublish KDP</th>
+                                <th>Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(item, index) in list_account">
+                                <td>{{ index +1 }}</td>
+                                <td>{{ item.name }}</td>
+                                <td>{{ item.email }}</td>
+                                <td>{{ item.profile_path }}</td>
+                                <td>
+                                    <span v-if="item.status_upload == 0" v-on:click="upload(item)" class="text-info" style="cursor: pointer;">Upload</span>
+                                    <span v-if="item.status_upload == 1">Inqueue...</span>
+                                    <span v-if="item.status_upload == 2">Running...</span>
+                                </td>
+                                <td>
+                                    <span  v-if="item.status_checksale == 0" v-on:click="check_sales(item)" class="text-success" style="cursor: pointer;">Check Sales</span>
+                                    <span v-if="item.status_checksale == 1">Inqueue...</span>
+                                    <span v-if="item.status_checksale == 2">Running...</span>
+                                </td>
+                                <!-- <td>
+                                    <span  v-if="item.status_editdesign == 0" v-on:click="edit_disign(item)" class="text-primary" style="cursor: pointer;">Start Edit</span>
+                                    <span v-if="item.status_editdesign == 1">Inqueue...</span>
+                                    <span v-if="item.status_editdesign == 2">Edit a design...</span>
+                                    <span v-if="item.status_editdesign == 3">Listing...</span>
+                                </td> -->
+                                <td>
+                                    <span  v-if="item.id != kdp_unpublish_id" v-on:click="kdp_unpublish(item)" class="text-warning" style="cursor: pointer;">Unpublish</span>
+                                    <span v-if="item.id == kdp_unpublish_id">Running...</span>
+                                </td>
+                                <td>
+                                    <span  v-if="item.id != remove_id" v-on:click="remove_account(item)" class="text-danger" style="cursor: pointer;">Remove</span>
+                                    <span v-if="item.id == remove_id">Removing...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <button class="btn btn-success" id="modal_create_account" type="submit">Create Account</button>
+                    <button class="btn btn-info"  type="submit" style="position: relative;">
+                        <input type="file" id="import_account" name="file">
+                    Import Account</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="hidden">
+        <p id="message"></p>
+        <div class="prosess">
+            <div class="prosess-item"></div>
+        </div>
+        <button id="close-button-notification">
+            Close
+        </button>
+        <button id="restart-button-app" class="hidden">
+            Restart
+        </button>
+    </div>
+    <script type="text/javascript" src="./public/js/vue.js"></script>
+    
+    <script>
+
+        require('./public/js/index');
+        
+        //require('./public/js/import-account');
+    </script>
+    
+</body>

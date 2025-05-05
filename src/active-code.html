@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Active code</title>
+	<link rel="stylesheet" href="./../node_modules/bootstrap/dist/css/bootstrap.min.css">
+	<link rel="stylesheet" href="./../public/css/style.css">
+</head>
+	
+<body class="config-window">
+	<form id="active_code" method="POST" action="">
+		<div class="form-group">
+		    <label for="vps_name">VPS Name</label>
+		    <input name="name" type="text" class="form-control" id="vps_name" placeholder="Enter vps name">
+		    <small id="emailHelp" class="form-text text-muted">Đặt tên dễ nhớ cho vps của bạn.</small>
+		  </div>
+
+		<div class="form-group">
+		    <label for="vps_code">Activation Code</label>
+		    <input name="code" type="text" class="form-control" id="vps_code" placeholder="Enter activation code">
+		  </div>
+		
+		<div class="text-center"><button type="submit" class="btn btn-primary">Active Code</button></div>
+	</form>
+</body>
+<script type="text/javascript">
+	const { ipcRenderer } = require('electron');
+    const $ = require('jquery');
+    const config = require('./../config.js');
+	$("#active_code").on('submit',function(){
+		var name = $('#active_code input[name="name"]').val();
+		var code = $('#active_code input[name="code"]').val();
+		if (name == '')
+		{
+			alert('Name không được để trống');
+			$('#active_code input[name="name"]').focus();
+			return false;
+		}
+		if (code == '')
+		{
+			alert('Code không được để trống');
+			$('#active_code input[name="code"]').focus();
+			return false;
+		}
+		$.ajax({
+            url : config.host+"/active/code",
+            type : "post",
+            dataType:"text",
+            data : {
+                'code' : code,
+                'name' : name
+            },
+            success : function (result){
+            	console.log($.parseJSON(result).data);
+                ipcRenderer.send('active_code_success',$.parseJSON(result).data);
+            },
+            error : function (error){
+            	alert($.parseJSON(error.responseText).message);
+            }
+        });
+		return false;
+	})
+</script>
+</html>
