@@ -29,6 +29,12 @@ function mainMenu(mainWindow) {
             }
         },
         {
+            label: 'Aplication',
+            click: () => {
+                mainWindow.loadFile('src/views/aplication.html');
+            }
+        },
+        {
             type: 'separator',
         },
         {

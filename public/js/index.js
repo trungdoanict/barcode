@@ -19,7 +19,7 @@ const restartButton = document.getElementById('restart-button');
 ipcRenderer.send('app_version');
 ipcRenderer.on('app_version', (event, arg) => {
     ipcRenderer.removeAllListeners('app_version');
-    version.innerText = 'Version ' + arg.version;
+    //version.innerText = 'Version ' + arg.version;
 });
 
 ipcRenderer.on('update_available', () => {

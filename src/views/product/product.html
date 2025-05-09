@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Barcode Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./../../../public/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/awesome.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/style.css" rel="stylesheet" />
+</head>
+
+<body class="loading">
+
+    <div class="container mt-4" id="aplicationProduct">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="justify-content-between">📦 Quản lý sản phẩm</h4>
+            <div>
+                <button class="btn btn-primary me-2" @click="handleModelProduct">
+                    <i class="fa fa-plus"></i> Thêm
+                </button>
+                <button class="btn btn-secondary me-2" onclick="scanBarcode()">
+                    <i class="fa fa-barcode"></i> Quét barcode
+                </button>
+                <button class="btn btn-dark" onclick="printBarcode()">
+                    🖨️ In barcode
+                </button>
+            </div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <table class="table table-bordered bg-white shadow rounded">
+            <thead class="table-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Hạn dùng</th>
+                    <th>Mô tả</th>
+                    <th>Mã vạch</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><img src="https://via.placeholder.com/50" class="product-img"></td>
+                    <td>Bánh quy ABC</td>
+                    <td>Giòn, ngọt, dễ ăn</td>
+                    <td class="text-success">30/12/2025</td>
+                    <td>
+
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning me-1"><i class="fa fa-edit"></i></button>
+                        <button class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Modal thêm/sửa sản phẩm -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">➕ Thêm sản phẩm</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productForm">
+                        <div class="mb-3">
+                            <label class="form-label">Tên sản phẩm</label>
+                            <input type="text" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mô tả</label>
+                            <textarea class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ngày hết hạn</label>
+                            <input type="date" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ảnh sản phẩm</label>
+                            <input type="file" class="form-control">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mã barcode</label>
+                            <input type="text" id="barcodeInput" class="form-control" placeholder="VD: 123456789012">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn btn-primary">Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="./../../../public/js/vue.global.js"></script>
+    <script>
+       
+        const {
+            ipcRenderer
+        } = require('electron');
+        const { generateMixedBarcode } = require('./../../../public/js/functions');
+        const $ = require('jquery');
+
+
+        console.log(generateMixedBarcode());
+
+        const DB = require('./../../../public/js/db.js');
+        const AccountTable = new DB('kdb_account');
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    message: 'Xin chào Vue 3!',
+                    count: 0
+                };
+            },
+            methods: {
+                handleModelProduct() {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'create',
+                        data: {}
+                    });
+                    /*
+                    ipcRenderer.send('show_modal_create_product', {
+                        type: 'create',
+                        data: {
+                            title: '11',
+                            description: '222',
+                            exexpirationDate: '21726976453',
+                            barcode: '6K3RMD858H21K4UKECC3SY8FUU96OW0W'
+                        }
+                    });*/
+                }
+            }
+        }).mount('#aplicationProduct');
+
+        const { initializeApp } = require('firebase/app');
+const { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  deleteDoc 
+} = require('firebase/firestore');
+
+// Firebase configuration - Replace with your own config
+const firebaseConfig = {
+    apiKey: "AIzaSyC91etAIP19ulAOkjpYr7cUdYDAPz2XaW4",
+    authDomain: "barcode-94ee1.firebaseapp.com",
+    projectId: "barcode-94ee1",
+    storageBucket: "barcode-94ee1.firebasestorage.app",
+    messagingSenderId: "910689800859",
+    appId: "1:910689800859:web:0b1aa4987d4625ef36ec3e",
+    measurementId: "G-T7E4YH1SCK"
+};
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp);
+
+ addDoc(collection(db, 'items'), {
+      title: 'title',
+      content: 'content',
+      createdAt: new Date()
+    });
+    </script>
+</body>

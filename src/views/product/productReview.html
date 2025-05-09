@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Thông Tin Sản Phẩm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./../../../public/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/awesome.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/style.css" rel="stylesheet" />
+    <style>
+        .app-window {
+            max-width: 500px;
+            margin: 40px auto;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            padding: 24px;
+        }
+
+        .form-label {
+            font-weight: 500;
+            width: 100%;
+            float: left;
+            text-align: left;
+            margin-bottom: 2px;
+        }
+
+        .form-control {
+            border-radius: 5px;
+
+        }
+
+        .btn-app {
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .header-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .title {
+            font-weight: bold;
+        }
+
+        table td {
+            vertical-align: middle;
+        }
+    </style>
+</head>
+
+<body class="loading">
+    <div class="px-3 mt-4" id="aplicationProduct">
+        <div class="header-title">Thông Tin Sản Phẩm</div>
+
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <td style="width: 150px;" scope="col">Tên sản phẩm</td>
+                    <td scope="row" class="title">{{title}}</td>
+                </tr>
+                <tr>
+                    <td scope="col">Mô tả</th>
+                    <td class="title">{{description}}</td>
+                </tr>
+                <tr>
+                    <td scope="col">Ngày hết hạn</td>
+                    <td class="title">{{convertTimestampToDate}}</td>
+                </tr>
+                <tr>
+                    <td scope="col">Barcode</td>
+                    <td class="title">
+                        <div id="Barcode" :class="`showBarcode w-full mx-auto   p-2 bg-white ${!title ? 'hidden' :''}`">
+                            <p class="text-[14px] text-center">{{title}}</p>
+                            <svg ref="barcode" class="w-full h-auto"></svg>
+                            <p class="text-[14px] text-center">{{barcode}}</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="clearfix"></div>
+        <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center">
+            <button @click="handleSubmitPrint" class="btn btn-info btn-app "><i class="fa-solid fa-print"></i> In
+                Barcode</button>
+            <button @click="handleSubmitEdit" class="btn btn-warning btn-app"><i
+                    class="fa-regular fa-pen-to-square"></i> Sửa</button>
+            <button @click="handleSubmitDelete" class="btn btn-danger btn-app"><i
+                    class="fa-regular fa-circle-xmark"></i> Xóa</button>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="./../../../public/js/vue.global.js"></script>
+
+    <script>
+        const JsBarcode = require('jsbarcode');
+        const {
+            ipcRenderer
+        } = require('electron');
+        const { generateMixedBarcode } = require('./../../../public/js/functions');
+        const $ = require('jquery');
+        const moment = require('moment');
+        const firestoreService = require('./../../../public/js/firestoreService.js');
+        const COLLECTION_PRODUCT = 'products';
+        const { createApp } = Vue;
+        const app = createApp({
+
+            data() {
+                return {
+                    id: '',
+                    title: '',
+                    description: '',
+                    expiryDate: '',
+                    barcode: ''
+                };
+            },
+            methods: {
+                async handleSubmitPrint() {
+                    const printContents = document.getElementById("Barcode").innerHTML
+                    const printWindow = window.open('', '', 'width=800,height=600')
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>In barcode</title>
+                            <style>
+                               .w-full{
+                                    width: 100%;
+                                } 
+                                .mx-auto{
+                                    margin-left: auto;
+                                    margin-right: auto;
+                                }
+                                .text-center{
+                                    text-align: center;         
+                                }
+                                .h-auto{
+                                            height: auto;             
+                                }
+                                p{
+                                    margin: 0
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${printContents}
+                            <script>
+                            window.onload = function() {
+                                window.print();
+                                window.onafterprint = () => window.close();
+                            }
+                            <\/script>
+                        </body>
+                        </html>
+                    `)
+                    printWindow.document.close()
+                },
+            
+                async handleSubmitEdit() {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'edit',
+                        data: {
+                            id: this.id,
+                            title: this.title,
+                            description: this.description,
+                            expiryDate:  this.expiryDate,
+                            barcode:  this.barcode
+                        }
+                    });
+                    ipcRenderer.send('close-window','window_review_product');
+                },
+                async handleSubmitDelete() {
+
+                }
+            },
+            computed: {
+                convertTimestampToDate() {
+                    return moment(this.expiryDate).format('DD/MM/YYYY')
+                }
+            },
+            mounted() {
+
+            },
+            watch: {
+                barcode(newValue, oldValue) {
+                    JsBarcode(this.$refs.barcode, this.barcode, {
+                        format: "CODE128",
+                        displayValue: false,
+                        fontSize: 80,
+                        height: 300,
+                        width: 4
+                    });
+                }
+            }
+        })
+        const vm = app.mount('#aplicationProduct');
+        ipcRenderer.on('data-from-product-review', (event, data) => {
+            vm.id = data.id;
+            vm.title = data.title;
+            vm.description = data.description;
+            vm.expiryDate = data.expiryDate ? data.expiryDate : '';
+            vm.barcode = data.barcode;
+        });
+    </script>
+</body>
