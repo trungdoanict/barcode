@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Barcode Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./../../../public/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/awesome.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/style.css" rel="stylesheet" />
+
+    <style>
+        .content-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            border-radius: 5px;
+        }
+
+        .panel {
+            background-color: white;
+            border: 1px solid #d6d6d6;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 10px 15px;
+            border-bottom: 1px solid #d6d6d6;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-body {
+            padding: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d6d6d6;
+            border-radius: 2px;
+            outline: none;
+            font-size: 13px;
+            background-color: #fff;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+        }
+
+        .barcode-input {
+            font-size: 16px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            letter-spacing: 1px;
+        }
+
+        .btn-scan {
+            width: 100%;
+            padding: 10px;
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        #searchButton {
+            background: #0078d7;
+        }
+
+        /* TABLE */
+
+        /* PRODUCT DETAILS */
+
+        .product-image {
+            width: 150px;
+            height: 150px;
+            background-color: #f9f9f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #d6d6d6;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .product-code {
+            color: var(--light-text);
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .product-price {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+
+        .product-meta {
+            margin-top: 15px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .meta-item {
+            font-size: 13px;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .bottomProduct {
+            position: fixed;
+            width: 100%;
+            background: #d5d5d5;
+            bottom: 0;
+        }
+    </style>
+</head>
+
+<body class="loading">
+
+    <div class="mt-4" id="aplicationProduct">
+        <div class="content-area">
+            <div class="row d-flex align-items-stretch">
+                <div class="col-6">
+                    <div class="panel">
+                        <div class="panel-header">
+                            Nhập mã barcode
+                        </div>
+                        <div class="panel-body">
+                            <div class="form-group">
+                                <label class="form-label"> Quét hoặc nhập mã Barcode:</label>
+                                <input ref="inputSearch" type="text" v-model="inputSearch"
+                                    class="form-control barcode-input" placeholder="Nhập hoặc quét mã barcode..."
+                                    autocomplete="off">
+                            </div>
+                            <button id="searchButton" class="btn-scan" @click="handleSearchProduct" v-if="!isLoading">
+                                <i class="fa-solid fa-magnifying-glass"></i> Tìm Kiếm
+                            </button>
+                            <button id="searchButton" class="btn-scan " disabled v-else>
+                                Đang tìm...
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class=" col-6">
+                    <div class="">
+                        <div class="">
+                            <div id="loadingMessage" v-if="statusSearchProduct == 1"
+                                class="loading justify-content-center border p-3">
+                                <img width="80px" class="mx-auto" src="../../../public/img/search.png" alt="">
+                                <p class="text-center mt-1">Đang tìm kiếm sản phẩm...</p>
+                            </div>
+                            <div id="noResult" class="no-result justify-content-center border p-3"
+                                v-if="statusSearchProduct == 3">
+                                <img width="80px" class="mx-auto" src="../../../public/img/no-data.png" alt="">
+                                <p class="text-center mt-1">Không tìm thấy sản phẩm với mã barcode này!</p>
+                            </div>
+                            <div :class="`product-details ${statusSearchProduct == 2 ? 'show' : 'hidden'}`">
+                                <div class="clearfix"></div>
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <td style="width: 150px;" scope="col">Tên sản phẩm</td>
+                                            <td scope="row" class="title">{{infomationDataSearch.title}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="col">Mô tả</th>
+                                            <td class="title">{{infomationDataSearch.description}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="col">Ngày hết hạn</td>
+                                            <td class="title">{{infomationDataSearch.expiryDate}}</td>
+                                        </tr>
+                                        <tr>
+                                            <td scope="col">Barcode</td>
+                                            <td class="title">
+                                                <div id="Barcode" class="showBarcode w-full mx-auto   p-2 bg-white ">
+                                                    <p class="text-[14px] text-center">{{infomationDataSearch.title}}
+                                                    </p>
+                                                    <svg ref="barcode" class="w-full h-auto"></svg>
+                                                    <p class="text-[14px] text-center">{{infomationDataSearch.barcode}}
+                                                    </p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Searches Panel -->
+            <div class="panel">
+                <div class="panel-header">
+                    Lịch sử tìm kiếm gần đây
+                </div>
+                <div class="">
+                    <div class="table-container">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th width="30%">Mã Barcode</th>
+                                    <th width="40%">Tên sản phẩm</th>
+                                    <th width="15%">Thời gian</th>
+                                    <th width="15%">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentList">
+                                <tr v-for="(item, index) in dataHistory" :key="index">
+                                    <td>{{item.barcode}}</td>
+                                    <td>{{item.title}}</td>
+                                    <td>{{item.time}}</td>
+                                    <td>
+                                        <button @click="handleSearchReturnProduct(item.barcode)" class="border">Tìm
+                                            lại</button>
+                                    </td>
+                                </tr>
+                                <tr v-if="dataHistory.length == 0">
+                                    <td colspan="4" class="text-center">Không có lịch sử tìm kiếm</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex flex-row justify-content-between p-[15px] px-4 bottomProduct">
+            <span>Đã sẵn sàng</span>
+            <span>Phiên bản: {{appVersion}}</span>
+            <span> Sản phẩm: {{totalDocument}}</span>
+        </div>
+    </div>
+
+
+    <script type="text/javascript" src="./../../../public/js/vue.global.js"></script>
+    <script>
+        const moment = require('moment');
+        const JsBarcode = require('jsbarcode');
+        const {
+            ipcRenderer
+        } = require('electron');
+        const { generateMixedBarcode } = require('./../../../public/js/functions');
+        const $ = require('jquery');
+        
+        const firestoreService = require('./../../../public/js/firestoreService.js');
+        const COLLECTION_PRODUCT = 'products';
+
+        const DB = require('./../../../public/js/db.js');
+        const AccountTable = new DB('kdb_account');
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    inputSearch: 'IJCV5AP0QD31K1ET20O6GV1E60CK16FF',
+                    isLoading: false,
+                    statusSearchProduct: 0, //0 chưa tìm, 1 đang tìm, 2 tìm thấy, 3 không tìm thấy
+                    infomationDataSearch: {
+                        id: '',
+                        title: '',
+                        description: '',
+                        expiryDate: '',
+                        barcode: ''
+                    },
+                    dataHistory: [],
+                    totalDocument: 0,
+                    appVersion: ''
+                };
+            },
+            watch: {
+                inputSearch(newValue, oldValue) {
+                    if (newValue.length == 32) {
+                        this.handleSearchProduct();
+                    }
+                }
+            },
+            computed: {
+
+            },
+            methods: {
+                async handleSearchReturnProduct(barcode) {
+                    this.$refs.inputSearch.focus();
+                    this.isLoading = true;
+                    this.statusSearchProduct = 1;
+                    this.inputSearch = barcode;
+                    let data = await firestoreService.findProductByBarcode(barcode, COLLECTION_PRODUCT, 'barcode');
+                    if (data) {
+                        let dataInfo = {
+                            id: data.id,
+                            title: data.title,
+                            description: data.description,
+                            expiryDate: data.expiryDate ? moment(data.expiryDate).format('DD/MM/YYYY') : '',
+                            barcode: data.barcode,
+                            time: moment().format('HH:mm')
+                        }
+                        this.infomationDataSearch = dataInfo;
+                        this.statusSearchProduct = 2;
+                        JsBarcode(this.$refs.barcode, data.barcode, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 300,
+                            width: 4
+                        });
+                    } else {
+                        this.statusSearchProduct = 3
+                    }
+                    this.isLoading = false;
+                },
+                async handleSearchProduct() {
+                    this.isLoading = true;
+                    this.statusSearchProduct = 1
+                    let data = await firestoreService.findProductByBarcode(this.inputSearch, COLLECTION_PRODUCT, 'barcode');
+                    console.log(data);
+                    if (data) {
+                        let dataInfo = {
+                            id: data.id,
+                            title: data.title,
+                            description: data.description,
+                            expiryDate: data.expiryDate ? moment(data.expiryDate).format('DD/MM/YYYY') : '',
+                            barcode: data.barcode,
+                            time: moment().format('HH:mm')
+                        }
+                        this.infomationDataSearch = dataInfo;
+                        this.statusSearchProduct = 2;
+                        JsBarcode(this.$refs.barcode, data.barcode, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 300,
+                            width: 4
+                        });
+                        if (!this.dataHistory.some(item => item.barcode === data.barcode)) {
+                            this.dataHistory.unshift(dataInfo);
+                        }
+                    } else {
+                        this.statusSearchProduct = 3
+                    }
+                    this.isLoading = false;
+                },
+                setBarcode(el, code) {
+                    if (el && code) {
+                        JsBarcode(el, code, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 300,
+                            width: 4
+                        });
+                    }
+                },
+                convertTimestampToDate(dateTimestapm) {
+                    if (dateTimestapm) {
+                        let timestampDate = moment(new Date()).unix() * 1000;
+                        let status = 'finish'
+                        if (parseFloat(dateTimestapm) > parseFloat(timestampDate)) {
+                            status = 'active'
+                        }
+                        return {
+                            status,
+                            date: moment(dateTimestapm).format('DD/MM/YYYY')
+                        }
+                    }
+                    return ''
+
+                },
+
+                async CountDocument() {
+                    this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_PRODUCT, []);
+                },
+
+            },
+            async mounted() {
+                let sef = this;
+                this.$refs.inputSearch.focus();
+                await firestoreService.subscribeToCollection(COLLECTION_PRODUCT, async function (data) {
+                    await sef.CountDocument();
+                });
+                ipcRenderer.send('app_version');
+                ipcRenderer.on('app_version', (event, arg) => {
+                    this.appVersion = arg.version;
+                });
+            },
+        }).mount('#aplicationProduct');
+
+
+    </script>
+</body>

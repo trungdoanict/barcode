@@ -1,4 +1,7 @@
 const $ = require('jquery');
+window.addEventListener('DOMContentLoaded', () => {
+  document.body.classList.remove('loading')
+})
 function generateMixedBarcode() {
     const now = new Date();
     const pad = (n, width = 2) => n.toString().padStart(width, '0');

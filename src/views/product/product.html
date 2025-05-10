@@ -6,22 +6,28 @@
     <link href="./../../../public/css/bootstrap.min.css" rel="stylesheet" />
     <link href="./../../../public/css/awesome.min.css" rel="stylesheet" />
     <link href="./../../../public/css/style.css" rel="stylesheet" />
+    <style>
+        table td {
+            vertical-align: middle;
+        }
+
+        .btn.btn-sm {
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #fff;
+        }
+    </style>
 </head>
 
 <body class="loading">
 
-    <div class="container mt-4" id="aplicationProduct">
+    <div class="px-3 mt-4" id="aplicationProduct">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="justify-content-between">📦 Quản lý sản phẩm</h4>
             <div>
                 <button class="btn btn-primary me-2" @click="handleModelProduct">
                     <i class="fa fa-plus"></i> Thêm
-                </button>
-                <button class="btn btn-secondary me-2" onclick="scanBarcode()">
-                    <i class="fa fa-barcode"></i> Quét barcode
-                </button>
-                <button class="btn btn-dark" onclick="printBarcode()">
-                    🖨️ In barcode
                 </button>
             </div>
         </div>
@@ -39,72 +45,87 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><img src="https://via.placeholder.com/50" class="product-img"></td>
-                    <td>Bánh quy ABC</td>
-                    <td>Giòn, ngọt, dễ ăn</td>
-                    <td class="text-success">30/12/2025</td>
-                    <td>
+                <tr v-if="!isLoading && data.length == 0">
+                    <td colspan="6" class="text-center">Không có dữ liệu.</td>
+                </tr>
+                <tr v-if="isLoading">
+                    <td colspan="6" class="text-center">Loading...</td>
+                </tr>
+                <tr v-for="(item, index) in data" :key="index" v-else>
+                    <td>{{index+1}}</td>
+                    <td><span class="ellipsis" style="width: 180px;">{{item.title}}</span></td>
+                    <td :class="convertTimestampToDate(item.expiryDate).status == 'active' ? 'text-success' : ''">
+                        {{convertTimestampToDate(item.expiryDate).date}}</td>
+                    <td class=""><span class="ellipsis" style="width: 170px;">{{item.description}}</span></td>
+                    <td style="width: 280px;">
+                        <div :ref="'barcode-' + index" style="width: 100%;"
+                            class="showBarcode w-full mx-auto   p-2 bg-white">
+                            <p class="text-[14px] text-center ellipsis"
+                                style="width: 280px; text-align: center; margin: 0 auto;">{{item.title}}</p>
+                            <svg :ref="el => setBarcode(el, item.barcode)" class="w-full h-auto"></svg>
+                            <p class="text-[14px] text-center">{{item.barcode}}</p>
+                        </div>
+
 
                     </td>
-                    <td>
-                        <button class="btn btn-sm btn-warning me-1"><i class="fa fa-edit"></i></button>
-                        <button class="btn btn-sm btn-danger"><i class="fa fa-trash"></i></button>
+                    <td style="width: 200px;">
+                        <button class="btn btn-sm btn-warning me-1" @click="handleEditProduct(index)"><i
+                                class="fa fa-edit"></i></button>
+                        <button class="btn btn-sm btn-info me-1" @click="printBarcode(index)"><i
+                                class="fa-solid fa-print"></i></button>
+                        <button class="btn btn-sm btn-secondary me-1" @click="handleReviewProduct(index)"><i
+                                class="fa-solid fa-eye"></i></button>
+                        <button class="btn btn-sm btn-danger" @click="handleDeleteProduct(index)"><i
+                                class="fa fa-trash"></i></button>
                     </td>
                 </tr>
             </tbody>
         </table>
-    </div>
-    <!-- Modal thêm/sửa sản phẩm -->
-    <div class="modal fade" id="productModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content shadow">
-                <div class="modal-header">
-                    <h5 class="modal-title">➕ Thêm sản phẩm</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="productForm">
-                        <div class="mb-3">
-                            <label class="form-label">Tên sản phẩm</label>
-                            <input type="text" class="form-control" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mô tả</label>
-                            <textarea class="form-control" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ngày hết hạn</label>
-                            <input type="date" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ảnh sản phẩm</label>
-                            <input type="file" class="form-control">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Mã barcode</label>
-                            <input type="text" id="barcodeInput" class="form-control" placeholder="VD: 123456789012">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button class="btn btn-primary">Lưu</button>
-                </div>
+
+        <div class='d-flex flex-row justify-content-between p-[15px] mb-4'>
+            <div class='d-flex flex-row align-items-center gap-1'>
+                <span class=' align-items-center'>Rows</span>
+                <select v-model="pageSize" @change="changePageSize"
+                    class=' py-1 rounded-md border border-[#E5E7EB] text-[14px]'>
+                    <option value='10'>10</option>
+                    <option value='20'>20</option>
+                    <option value='40'>40</option>
+                    <option value='60'>60</option>
+                    <option value='80'>80</option>
+                    <option value='100'>100</option>
+                </select>
+                <span class='align-items-center'> / {{totalDocument}}</span>
+            </div>
+
+            <div class='text-center gap-1 d-flex flex-row align-items-center'>
+                <button
+                    class='align-items-center border px-3 pt-[5px] d-flex flex-row gap-1 rounded-md hover:bg-[#e7e5e5] disabled:opacity-75 disabled:hover:bg-[#fff] disabled:cursor-not-allowed'
+                    @click="handlePrev" :disabled="currentPage===1">
+                    <span>Prev</span>
+                </button>
+                <span class='py-1 align-items-center'>{{currentPage}}/{{Math.ceil(totalDocument / pageSize)}}</span>
+                <button
+                    class='align-items-center border px-3 pt-[5px]  d-flex flex-row rounded-md hover:bg-[#e7e5e5] disabled:opacity-75 disabled:hover:bg-[#fff] disabled:cursor-not-allowed'
+                    @click="handleNext" :disabled="isNextDisabled"><span>Next</span>
+
+                </button>
             </div>
         </div>
+
     </div>
+
     <script type="text/javascript" src="./../../../public/js/vue.global.js"></script>
     <script>
-       
+        const moment = require('moment');
+        const JsBarcode = require('jsbarcode');
         const {
             ipcRenderer
         } = require('electron');
+        
         const { generateMixedBarcode } = require('./../../../public/js/functions');
         const $ = require('jquery');
-
-
-        console.log(generateMixedBarcode());
+        const firestoreService = require('./../../../public/js/firestoreService.js');
+        const COLLECTION_PRODUCT = 'products';
 
         const DB = require('./../../../public/js/db.js');
         const AccountTable = new DB('kdb_account');
@@ -112,60 +133,239 @@
         createApp({
             data() {
                 return {
-                    message: 'Xin chào Vue 3!',
-                    count: 0
+                    lastVisible: {},
+                    firstVisible: {},
+                    pageHistory: [],
+                    whereConditions: [],
+                    orderBy: "createdAt|desc",
+                    currentPage: 1,
+                    pageSize: 10,
+                    isNextDisabled: false,
+                    totalDocument: 0,
+                    data: [],
+                    isLoading: true
                 };
             },
+            watch: {
+                pageSize(newValue, oldValue) {
+                    this.loadDataPage();
+                }
+            },
+            computed: {
+
+            },
             methods: {
+                printBarcode(index) {
+                    const el = this.$refs['barcode-' + index][0]; // do $refs là array nếu dùng trong v-for
+                    const svgHtml = el.outerHTML;
+
+                    const popup = window.open('', '_blank', 'width=400,height=300');
+                    popup.document.open();
+                    popup.document.write(`
+                    <html>
+                    <head>
+                        <title>In mã vạch</title>
+                        <style>
+                                body{
+                                text-alin: center;
+                                }
+                               .w-full{
+                                    width: 100%;
+                                } 
+                                .mx-auto{
+                                    margin-left: auto;
+                                    margin-right: auto;
+                                }
+                                .text-center{
+                                    text-align: center;         
+                                }
+                                .h-auto{
+                                            height: auto;             
+                                }
+                                p{
+                                    margin: 0
+                                }
+                            </style>
+                            </head>
+                            <body onload="window.print(); window.close();">
+                                ${svgHtml}
+                            </body>
+                            </html>
+                    `);
+                    popup.document.close();
+                },
+                setBarcode(el, code) {
+                    if (el && code) {
+                        JsBarcode(el, code, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 300,
+                            width: 4
+                        });
+                    }
+                },
+                convertTimestampToDate(dateTimestapm) {
+                    if (dateTimestapm) {
+                        let timestampDate = moment(new Date()).unix() * 1000;
+                        let status = 'finish'
+                        if (parseFloat(dateTimestapm) > parseFloat(timestampDate)) {
+                            status = 'active'
+                        }
+                        return {
+                            status,
+                            date: moment(dateTimestapm).format('DD/MM/YYYY')
+                        }
+                    }
+                    return ''
+
+                },
+                handlePrev() {
+                    if (this.currentPage > 1) {
+                        this.loadDataPage('prev');
+                    }
+                },
+                handleNext() {
+                    this.loadDataPage('next');
+                },
+                changePageSize() {
+                    this.currentPage = 1;
+                    this.lastVisible = null;
+                    this.firstVisible = null;
+                    this.pageHistory = [];
+                },
+                handleReviewProduct(index) {
+                    ipcRenderer.send('show_modal_review_product', {
+                        id: this.data[index].id,
+                        title: this.data[index].title,
+                        description: this.data[index].description,
+                        expiryDate: this.data[index].expiryDate,
+                        barcode: this.data[index].barcode
+                    });
+                },
+                handleEditProduct(index) {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'edit',
+                        data: {
+                            id: this.data[index].id,
+                            title: this.data[index].title,
+                            description: this.data[index].description,
+                            expiryDate: this.data[index].expiryDate,
+                            barcode: this.data[index].barcode
+                        }
+                    });
+                },
+                handleDeleteProduct(index) {
+                    ipcRenderer.invoke('confirm-dialog').then(async confirmed => {
+                        if (confirmed) {
+                            let statusDelete = await firestoreService.deleteDocument(COLLECTION_PRODUCT, this.data[index].id);
+                            if (statusDelete) {
+                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!', 'mainWindow');
+                                ipcRenderer.send('close-window', 'window_review_product');
+                            }
+                        }
+                    })
+                },
                 handleModelProduct() {
                     ipcRenderer.send('show_modal_input_product', {
                         type: 'create',
                         data: {}
                     });
-                    /*
-                    ipcRenderer.send('show_modal_create_product', {
-                        type: 'create',
-                        data: {
-                            title: '11',
-                            description: '222',
-                            exexpirationDate: '21726976453',
-                            barcode: '6K3RMD858H21K4UKECC3SY8FUU96OW0W'
+                },
+                async CountDocument() {
+                    this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_PRODUCT, []);
+                },
+                async loadDataPage(type = null) {
+                    this.isLoading = true;
+                    let queryLastVisible;
+                    let queryFirstVisible
+                    if (!type) {
+                        queryLastVisible = null;
+                        queryFirstVisible = null;
+                    }
+                    if (type == 'next') {
+                        queryLastVisible = this.lastVisible;
+                        queryFirstVisible = this.firstVisible;
+                    }
+                    if (type == 'prev') {
+                        queryLastVisible = this.pageHistory[this.pageHistory.length - 1]?.lastVisible;
+                        queryFirstVisible = this.pageHistory[this.pageHistory.length - 1]?.firstVisible;
+                        if (this.pageHistory.length > 1) {
+                            const previousPage = this.pageHistory[this.pageHistory.length - 2];
+                            queryLastVisible = previousPage.lastVisible;
+                            queryFirstVisible = previousPage.firstVisible;
                         }
-                    });*/
+                    }
+                    const result = await firestoreService.getPaginatedData(
+                        COLLECTION_PRODUCT,
+                        this.whereConditions,
+                        this.orderBy,
+                        this.pageSize,
+                        queryLastVisible,
+                        queryFirstVisible,
+                        type
+                    );
+                    this.data = result.data;
+                    this.lastVisible = result.lastVisible;
+                    this.firstVisible = result.firstVisible;
+
+                    if (type != 'prev') {
+                        this.pageHistory = [...this.pageHistory, { lastVisible: result.lastVisible, firstVisible: result.firstVisible }];
+                    }
+                    if (type == 'next') {
+                        this.currentPage = this.currentPage + 1;
+                    }
+                    if (type == 'prev') {
+                        this.pageHistory = this.pageHistory.slice(0, -1);
+                        this.currentPage = this.currentPage - 1;
+                    }
+
+                    //check next disable
+                    if (result.data.length < this.pageSize) {
+                        this.isNextDisabled = true;
+                    } else {
+                        const nextCheck = await firestoreService.getPaginatedData(
+                            COLLECTION_PRODUCT,
+                            this.whereConditions,
+                            this.orderBy,
+                            this.pageSize,
+                            result.lastVisible,
+                            //isPrev: false,
+                        );
+
+                        if (nextCheck.data.length === 0) {
+                            this.isNextDisabled = true;
+                        } else {
+                            this.isNextDisabled = false;
+                        }
+                    }
+                    this.isLoading = false;
+                },
+                ResetConfig() {
+                    this.lastVisible = {};
+                    this.firstVisible = {};
+                    this.pageHistory = [];
+                    this.whereConditions = [];
+                    this.orderBy = "createdAt|desc";
+                    this.currentPage = 1;
+                    this.pageSize = 10;
+                    this.isNextDisabled = false;
+                    this.totalDocument = 0;
+                    this.data = [];
+                    this.isLoading = true;
                 }
-            }
+            },
+            async mounted() {
+                let sef = this;
+                await firestoreService.subscribeToCollection(COLLECTION_PRODUCT, async function (data) {
+                    sef.ResetConfig();
+                    await sef.CountDocument();
+                    await sef.loadDataPage();
+                });
+
+            },
         }).mount('#aplicationProduct');
 
-        const { initializeApp } = require('firebase/app');
-const { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc, 
-  deleteDoc 
-} = require('firebase/firestore');
 
-// Firebase configuration - Replace with your own config
-const firebaseConfig = {
-    apiKey: "AIzaSyC91etAIP19ulAOkjpYr7cUdYDAPz2XaW4",
-    authDomain: "barcode-94ee1.firebaseapp.com",
-    projectId: "barcode-94ee1",
-    storageBucket: "barcode-94ee1.firebasestorage.app",
-    messagingSenderId: "910689800859",
-    appId: "1:910689800859:web:0b1aa4987d4625ef36ec3e",
-    measurementId: "G-T7E4YH1SCK"
-};
-
-// Initialize Firebase
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp);
-
- addDoc(collection(db, 'items'), {
-      title: 'title',
-      content: 'content',
-      createdAt: new Date()
-    });
     </script>
 </body>

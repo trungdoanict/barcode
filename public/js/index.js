@@ -4,7 +4,6 @@ const {
 const { generateMixedBarcode } = require('./functions');
 const $ = require('jquery');
 
-
 console.log(generateMixedBarcode());
 
 const DB = require('./db.js');
@@ -16,10 +15,12 @@ const notification = document.getElementById('notification');
 const message = document.getElementById('message');
 const restartButton = document.getElementById('restart-button');
 
+
 ipcRenderer.send('app_version');
 ipcRenderer.on('app_version', (event, arg) => {
     ipcRenderer.removeAllListeners('app_version');
-    //version.innerText = 'Version ' + arg.version;
+    console.log(arg.version);
+    version.innerText = 'Version ' + arg.version;
 });
 
 ipcRenderer.on('update_available', () => {
@@ -134,30 +135,3 @@ $('#config_form button').on('click',function(){
 
   	return false;
 })
-
-var appVuejs = new Vue({
-    el: '#aplication',
-    data: {
-        list_account: []
-    },
-    methods: {
-        
-    },
-    computed : {
-        
-    }
-})
-
-var logVuejs = new Vue({
-    el: '#console-log',
-    data: {
-        logs: []
-    },
-    methods: {
-        
-    },
-    computed : {
-        
-    }
-})
-

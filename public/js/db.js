@@ -1,7 +1,14 @@
 const db = require('electron-db');
-const path = require('path')
- 
-const location = localStorage.getItem('KDP')+'/db';
+const path = require('path');
+const {
+    ipcRenderer
+} = require('electron');
+let rootFolder; 
+ipcRenderer.on('rootFolder', (event, url) => {
+    rootFolder = url;
+});
+const location = rootFolder+'/db';
+console.log(rootFolder);
 module.exports =   class  DB {
     constructor(table){
         this.table = table;

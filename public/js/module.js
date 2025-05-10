@@ -5,31 +5,31 @@ const {
 function mainMenu(mainWindow) { 
     return Menu.buildFromTemplate([
         {
-            label: 'Scan Barcode',
+            label: 'Quét barcode',
             click: () => {
-                mainWindow.loadFile('src/views/index.html');
+                mainWindow.loadFile('src/views/product/productScan.html');
             }
         },
         {
             type: 'separator',
         },
         {
-            label: 'Product Manager',
+            label: 'Quản lý sản phẩm',
             click: () => {
-                mainWindow.loadFile('src/views/product.html');
+                mainWindow.loadFile('src/views/product/product.html');
             }
         },
         {
             type: 'separator',
         },
         {
-            label: 'Account Manager',
+            label: 'Quản lý tài khoản',
             click: () => {
                 mainWindow.loadFile('src/views/account.html');
             }
         },
         {
-            label: 'Aplication',
+            label: 'Thông tin ứng dụng',
             click: () => {
                 mainWindow.loadFile('src/views/aplication.html');
             }
@@ -38,22 +38,10 @@ function mainMenu(mainWindow) {
             type: 'separator',
         },
         {
-            label: 'Exit',
+            label: 'Thoát',
             click: () => {
                 app.quit()
             }
-        },
-        {
-            label: 'View',
-            submenu: [
-                { role: 'reload' },
-                { role: 'forcereload' },
-                { type: 'separator' },
-                { role: 'zoomin' },
-                { role: 'zoomout' },
-                { type: 'separator' },
-                { role: 'togglefullscreen' }
-            ]
         }
     ])
 }

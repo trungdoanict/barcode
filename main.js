@@ -13,7 +13,7 @@ const {
 } = require('./public/js/module');
 const path = require('path');
 const url = require('url');
-var fs = require('fs');
+const isDev = true;
 let windowns = {};
 
 function createWindow() {
@@ -29,7 +29,7 @@ function createWindow() {
     });
     windowns['mainWindow'].loadURL(
         url.format({
-            pathname: path.join(__dirname, 'src/views/product/product.html'),
+            pathname: path.join(__dirname, 'src/views/product/productScan.html'),
             protocol: 'file:',
             slashes: true
         })
@@ -38,6 +38,10 @@ function createWindow() {
     windowns['mainWindow'].on('closed', function () {
         windowns['mainWindow'] = null;
     });
+    windowns['mainWindow'].webContents.on('did-finish-load', () => {
+        const appDir = app.getPath('userData');
+        windowns['mainWindow'].webContents.send('rootFolder',appDir)
+    })
 
     windowns['mainWindow'].setMenu(mainMenu(windowns['mainWindow']));
 
@@ -48,7 +52,9 @@ app.whenReady().then(() => {
     app.on('activate', function () {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
-    windowns['mainWindow'].webContents.openDevTools();
+    if (isDev) {
+        windowns['mainWindow'].webContents.openDevTools();
+    }
     globalShortcut.register('Control+Alt+Shift+K', () => {
         windowns['mainWindow'].webContents.openDevTools();
     })
@@ -136,16 +142,18 @@ function show_window_input_product(data) {
     windowns['window_input_product'].webContents.on('did-finish-load', () => {
         windowns['window_input_product'].webContents.send('data-from-product', data);
     });
-    windowns['window_input_product'].webContents.openDevTools();
-
+    if (isDev) {
+        windowns['window_input_product'].webContents.openDevTools();
+    }
+    
     windowns['window_input_product'].on('closed', function () {
         windowns['window_input_product'] = null;
     });
 }
 function show_modal_review_product(data) {
     windowns['window_review_product'] = new BrowserWindow({
-        width: 1100,
-        height: 900,
+        width: 1200,
+        height: 1000,
         title: 'Thông tin sản phẩm',
         webPreferences: {
             nodeIntegration: true,           // Cho phép sử dụng Node.js trong renderer
@@ -168,7 +176,10 @@ function show_modal_review_product(data) {
     windowns['window_review_product'].webContents.on('did-finish-load', () => {
         windowns['window_review_product'].webContents.send('data-from-product-review', data);
     });
-    windowns['window_review_product'].webContents.openDevTools();
+    if (isDev) {
+        windowns['window_review_product'].webContents.openDevTools();
+    }
+    
 
     windowns['window_review_product'].on('closed', function () {
         windowns['window_review_product'] = null;
@@ -196,8 +207,14 @@ ipcMain.handle('show-error-dialog', async (event, message) => {
     });
 });
 
-ipcMain.handle('show-success-dialog', async (event, message) => {
-    const focusedWindow = BrowserWindow.getFocusedWindow();
+ipcMain.handle('show-success-dialog', async (event, message, windowSelect) => {
+    let focusedWindow;
+    if (windowSelect){
+        focusedWindow = windowns[windowSelect];
+    }else{
+        focusedWindow = BrowserWindow.getFocusedWindow();
+    }
+    
     return dialog.showMessageBox(focusedWindow, {
         type: 'info',
         title: 'Thành công',
@@ -207,6 +224,7 @@ ipcMain.handle('show-success-dialog', async (event, message) => {
 });
 // Hiển thị dialog xác nhận
 ipcMain.handle('confirm-dialog', async (event, options) => {
+    const focusedWindow = BrowserWindow.getFocusedWindow();
     const defaults = {
         title: 'Xác nhận',
         message: 'Bạn có chắc chắn muốn thực hiện hành động này?',
@@ -217,7 +235,7 @@ ipcMain.handle('confirm-dialog', async (event, options) => {
 
     const dialogOptions = { ...defaults, ...options };
 
-    const result = await dialog.showMessageBox(mainWindow, {
+    const result = await dialog.showMessageBox(focusedWindow, {
         type: 'question',
         ...dialogOptions
     });

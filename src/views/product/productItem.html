@@ -48,7 +48,7 @@
 
 <body class="loading">
     <div class="px-3 mt-4" id="aplicationProduct">
-        <div class="header-title">{{type == 'create' ? 'Tạo Sản Phẩm Mới' : 'Sửa Sản Phẩm'}}</div>
+        <div class="header-title">{{type == 'create' ? 'Tạo Sản Phẩm Mới' : 'Cập nhật Sản Phẩm'}}</div>
 
 
         <div class="mb-2">
@@ -81,11 +81,19 @@
             </div>
         </div>
         <div class="clearfix"></div>
-        <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center ">
-            <button v-if="type == 'create'" @click="handleSubmitInputProduct" class="btn btn-primary btn-app"><i
-                    class="fa-solid fa-plus"></i> Tạo Sản Phẩm</button>
-            <button v-if="type == 'edit'" @click="handleSubmitEditProduct" class="btn btn-warning btn-app"><i
-                    class="fa-regular fa-pen-to-square"></i> Xác nhận sửa sản phẩm</button>
+        <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center " v-if="type == 'create'">
+            <button @click="handleSubmitInputProduct" class="btn btn-success btn-app"><i class="fa-solid fa-check"></i>
+                Tạo Sản Phẩm</button>
+            <button @click="handleSubmitResetInputProduct" class="btn btn-info btn-app"><i
+                    class="fa-solid fa-rotate-right"></i> Nhập lại</button>
+            <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i class="fa-solid fa-xmark"></i>
+                Thoát</button>
+        </div>
+        <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center " v-if="type == 'edit'">
+            <button @click="handleSubmitEditProduct" class="btn btn-success btn-app"><i class="fa-solid fa-check"></i>
+                Cập nhật sản phẩm</button>
+            <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i class="fa-solid fa-xmark"></i>
+                Thoát</button>
         </div>
     </div>
 
@@ -115,11 +123,20 @@
                 };
             },
             methods: {
+
+                async handleSubmitResetInputProduct() {
+                    this.title = '';
+                    this.description = '';
+                    this.expiryDate = '';
+                },
+                async handleSubmitCloseProduct() {
+                    ipcRenderer.send('close-window', 'window_input_product');
+                },
                 async handleSubmitEditProduct() {
                     try {
                         console.log(this.id);
                         if (!this.id) {
-                            ipcRenderer.invoke('show-error-dialog',this.id);
+                            ipcRenderer.invoke('show-error-dialog', this.id);
                             return;
                         }
                         if (!this.title) {
@@ -131,7 +148,7 @@
                             return;
                         }
                         let timestampDate = moment(new Date(this.expiryDate)).unix() * 1000;
-                        
+
                         let idProduct = await firestoreService.updateDocument(COLLECTION_PRODUCT, this.id, {
                             title: this.title,
                             description: this.description,
@@ -175,15 +192,15 @@
                             barcode: this.barcode
                         });
                         console.log(idProduct, timestampDate, this.expiryDate);
-                        ipcRenderer.send('close-window', 'window_input_product');
+                        /*ipcRenderer.send('close-window', 'window_input_product');
                         ipcRenderer.send('show_modal_review_product', {
                             id: idProduct,
                             title: this.title,
                             description: this.description,
                             expiryDate: this.expiryDate ? timestampDate : null,
                             barcode: this.barcode
-                        });
-                        //ipcRenderer.invoke('show-success-dialog', 'Tạo sản phẩm thành công!');
+                        });*/
+                        ipcRenderer.invoke('show-success-dialog', 'Tạo sản phẩm thành công!');
                         this.title = '';
                         this.description = '';
                         this.expiryDate = '';
@@ -195,7 +212,7 @@
                 },
             },
             mounted() {
-                
+
                 this.barcode = generateMixedBarcode();
                 JsBarcode(this.$refs.barcode, this.barcode, {
                     format: "CODE128",
@@ -213,7 +230,7 @@
         })
         const vm = app.mount('#aplicationProduct');
         ipcRenderer.on('data-from-product', (event, data) => {
-                vm.type = data.type;
+            vm.type = data.type;
             if (data.type != 'create') {
                 vm.id = data.data.id;
                 vm.title = data.data.title;
@@ -222,5 +239,7 @@
                 vm.barcode = data.data.barcode;
             }
         });
+        
     </script>
+
 </body>

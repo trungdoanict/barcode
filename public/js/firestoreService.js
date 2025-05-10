@@ -11,7 +11,10 @@ const {
     where,
     orderBy,
     limit,
-    onSnapshot
+    onSnapshot,
+    getCountFromServer,
+    startAfter,
+    startAt
 } = require('firebase/firestore');
 const moment = require('moment');
 const firebaseConfig = require('./firebaseConfig');
@@ -109,6 +112,46 @@ class FirestoreService {
         }
     }
 
+    /**
+   * Tìm kiếm sản phẩm theo barcode chính xác
+   * @param {string} barcode - Mã barcode cần tìm
+   * @param {string} collectionName - Tên collection (mặc định là 'products')
+   * @param {string} barcodeField - Tên trường chứa barcode (mặc định là 'barcode')
+   * @returns {Object|null} - Thông tin sản phẩm hoặc null nếu không tìm thấy
+   */
+    async findProductByBarcode(barcode, collectionName = 'products', barcodeField = 'barcode') {
+        try {
+            // Tạo reference đến collection
+            const collectionRef = collection(this.db, collectionName);
+
+            // Tạo truy vấn để tìm kiếm barcode chính xác
+            const q = query(
+                collectionRef,
+                where(barcodeField, '==', barcode),
+                limit(1)
+            );
+
+            // Thực hiện truy vấn
+            const querySnapshot = await getDocs(q);
+
+            // Kiểm tra kết quả
+            if (querySnapshot.empty) {
+                console.log(`Không tìm thấy sản phẩm với barcode: ${barcode}`);
+                return null;
+            }
+            // Trả về sản phẩm đầu tiên tìm thấy
+            const doc = querySnapshot.docs[0];
+            return {
+                id: doc.id,
+                ...doc.data()
+            };
+        } catch (error) {
+            console.error(`Lỗi khi tìm kiếm barcode ${barcode}:`, error);
+            throw error;
+        }
+    }
+
+
     // Tìm kiếm documents theo điều kiện
     async queryDocuments(collectionName, conditions = [], orderByField = null, orderDirection = 'asc', limitCount = null) {
         try {
@@ -195,6 +238,65 @@ class FirestoreService {
             throw error;
         }
     }
+
+    async GetCountDocument(collectionName, whereConditions = []) {
+        try {
+            const colRef = collection(this.db, collectionName);
+            let q = query(colRef);
+            whereConditions.forEach(condition => {
+                const [field, operator, value] = condition;
+                q = query(q, where(field, operator, value));
+            });
+            const snapshot = await getCountFromServer(q);
+            return snapshot.data().count
+        } catch (error) {
+            console.error('Error subscribing to document:', error);
+            throw error;
+        }
+    }
+
+    async getPaginatedData(
+        collectionName,
+        whereConditions = [],
+        sort = "createdAt|desc",
+        pageSize = 10,
+        lastVisible = null,
+        firstVisible = null,
+        type = null
+    ) {
+        try {
+            const colRef = collection(db, collectionName);
+            let q = query(colRef);
+            whereConditions.forEach(condition => {
+                const [field, operator, value] = condition;
+                q = query(q, where(field, operator, value));
+            });
+
+            q = query(q, orderBy(sort.split('|')[0], sort.split('|')[1] == "asc" ? "asc" : "desc"), limit(pageSize));
+
+            if (type == 'prev' && firstVisible) {
+                q = query(q, startAt(firstVisible));
+            } else if (type == 'next' && lastVisible) {
+                q = query(q, startAfter(lastVisible));
+            }
+
+            const snapshot = await getDocs(q);
+
+            const firstDoc = snapshot.docs[0];
+            const lastDoc = snapshot.docs[snapshot.docs.length - 1];
+
+            return {
+                data: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })),
+                lastVisible: lastDoc,
+                firstVisible: firstDoc,
+            };
+        } catch (error) {
+            console.error('Error subscribing to document:', error);
+            throw error;
+        }
+    }
+
+
 }
 
 // Export instance của FirestoreService

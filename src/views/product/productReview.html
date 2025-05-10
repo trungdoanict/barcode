@@ -91,8 +91,9 @@
                 Barcode</button>
             <button @click="handleSubmitEdit" class="btn btn-warning btn-app"><i
                     class="fa-regular fa-pen-to-square"></i> Sửa</button>
-            <button @click="handleSubmitDelete" class="btn btn-danger btn-app"><i
-                    class="fa-regular fa-circle-xmark"></i> Xóa</button>
+            
+            <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i class="fa-solid fa-xmark"></i>
+                        Thoát</butto
         </div>
     </div>
 
@@ -160,7 +161,7 @@
                     `)
                     printWindow.document.close()
                 },
-            
+
                 async handleSubmitEdit() {
                     ipcRenderer.send('show_modal_input_product', {
                         type: 'edit',
@@ -168,19 +169,33 @@
                             id: this.id,
                             title: this.title,
                             description: this.description,
-                            expiryDate:  this.expiryDate,
-                            barcode:  this.barcode
+                            expiryDate: this.expiryDate,
+                            barcode: this.barcode
                         }
                     });
-                    ipcRenderer.send('close-window','window_review_product');
+                    ipcRenderer.send('close-window', 'window_review_product');
                 },
                 async handleSubmitDelete() {
-
-                }
+                    ipcRenderer.invoke('confirm-dialog').then(async confirmed => {
+                        if (confirmed) {
+                            let statusDelete = await firestoreService.deleteDocument(COLLECTION_PRODUCT, this.id);
+                            if (statusDelete){
+                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!','mainWindow');
+                                ipcRenderer.send('close-window', 'window_review_product');
+                            }
+                        }
+                    })
+                },
+                async handleSubmitCloseProduct() {
+                    ipcRenderer.send('close-window', 'window_review_product');
+                },
             },
             computed: {
                 convertTimestampToDate() {
-                    return moment(this.expiryDate).format('DD/MM/YYYY')
+                    if (this.expiryDate){
+                        return moment(this.expiryDate).format('DD/MM/YYYY')
+                    }
+                    return ''
                 }
             },
             mounted() {
