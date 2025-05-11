@@ -22,16 +22,17 @@ function mainMenu(mainWindow) {
         {
             type: 'separator',
         },
+        /*
         {
             label: 'Quản lý tài khoản',
             click: () => {
-                mainWindow.loadFile('src/views/account.html');
+                mainWindow.loadFile('src/views/index.html');
             }
-        },
+        },*/
         {
             label: 'Thông tin ứng dụng',
             click: () => {
-                mainWindow.loadFile('src/views/aplication.html');
+                mainWindow.loadFile('src/views/application.html');
             }
         },
         {

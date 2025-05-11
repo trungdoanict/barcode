@@ -1,6 +1,6 @@
 {
   "name": "barcode-tool",
-  "version": "3.8.8",
+  "version": "4.0.2",
   "description": "Barcode Tool",
   "main": "main.js",
   "repository": {
@@ -11,6 +11,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron .",
     "build": "electron-builder build --win --ia32 --publish never",
     "deploy": "electron-builder build --win --ia32 --publish always"
   },
@@ -19,8 +20,10 @@
   "devDependencies": {
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
     "electron": "^29.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "electron-reload": "^2.0.0-alpha.1"
   },
   "dependencies": {
     "axios": "^0.19.2",

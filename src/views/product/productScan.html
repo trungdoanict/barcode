@@ -8,36 +8,9 @@
     <link href="./../../../public/css/style.css" rel="stylesheet" />
 
     <style>
-        .content-area {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            border-radius: 5px;
-        }
+        
 
-        .panel {
-            background-color: white;
-            border: 1px solid #d6d6d6;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .panel-header {
-            padding: 10px 15px;
-            border-bottom: 1px solid #d6d6d6;
-            font-weight: 600;
-            font-size: 14px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .panel-body {
-            padding: 15px;
-        }
+        
 
         .form-group {
             margin-bottom: 15px;
@@ -50,10 +23,15 @@
             text-align: left;
         }
 
+        tr,
+        td {
+            border-color: #f7f7f7;
+        }
+
         .form-control {
             width: 100%;
             padding: 8px 10px;
-            border: 1px solid #d6d6d6;
+            border: 1px solid #f7f7f7;
             border-radius: 2px;
             outline: none;
             font-size: 13px;
@@ -61,14 +39,15 @@
         }
 
         .form-control:focus {
-            border-color: var(--primary-color);
+            border-color: #eee;
         }
 
         .barcode-input {
             font-size: 16px;
             padding: 10px;
-            background-color: #f9f9f9;
+            background-color: #f5f5f5;
             letter-spacing: 1px;
+            border: 1px solid #eee;
         }
 
         .btn-scan {
@@ -91,60 +70,7 @@
 
         /* PRODUCT DETAILS */
 
-        .product-image {
-            width: 150px;
-            height: 150px;
-            background-color: #f9f9f9;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 1px solid #d6d6d6;
-        }
-
-        .product-info {
-            flex: 1;
-        }
-
-        .product-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        .product-code {
-            color: var(--light-text);
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-
-        .product-price {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-
-        .product-description {
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--text-color);
-        }
-
-        .product-meta {
-            margin-top: 15px;
-            display: flex;
-            gap: 20px;
-        }
-
-        .meta-item {
-            font-size: 13px;
-        }
-
-        .meta-label {
-            font-weight: 600;
-            margin-right: 5px;
-        }
-
+       
         .header-title {
             font-size: 16px;
             font-weight: bold;
@@ -156,16 +82,20 @@
             background: #d5d5d5;
             bottom: 0;
         }
+
+        #aplicationProduct {
+            background: #f5f5f5;
+        }
     </style>
 </head>
 
 <body class="loading">
 
-    <div class="mt-4" id="aplicationProduct">
+    <div class="pb-3" id="aplicationProduct">
         <div class="content-area">
             <div class="row d-flex align-items-stretch">
                 <div class="col-6">
-                    <div class="panel">
+                    <div class="panel shadow-sm ">
                         <div class="panel-header">
                             Nhập mã barcode
                         </div>
@@ -173,10 +103,11 @@
                             <div class="form-group">
                                 <label class="form-label"> Quét hoặc nhập mã Barcode:</label>
                                 <input ref="inputSearch" type="text" v-model="inputSearch"
-                                    class="form-control barcode-input" placeholder="Nhập hoặc quét mã barcode..."
-                                    autocomplete="off">
+                                    class="form-control barcode-input rounded-1"
+                                    placeholder="Nhập hoặc quét mã barcode..." autocomplete="off">
                             </div>
-                            <button id="searchButton" class="btn-scan" @click="handleSearchProduct" v-if="!isLoading">
+                            <button id="searchButton" class="btn-scan rounded-1" @click="handleSearchProduct"
+                                v-if="!isLoading">
                                 <i class="fa-solid fa-magnifying-glass"></i> Tìm Kiếm
                             </button>
                             <button id="searchButton" class="btn-scan " disabled v-else>
@@ -188,20 +119,22 @@
 
                 <div class=" col-6">
                     <div class="">
-                        <div class="">
+                        <div class="panel   shadow-sm ">
+
                             <div id="loadingMessage" v-if="statusSearchProduct == 1"
-                                class="loading justify-content-center border p-3">
+                                class="loading text-centerjustify-content-center border p-3  text-center  rounded-2">
                                 <img width="80px" class="mx-auto" src="../../../public/img/search.png" alt="">
                                 <p class="text-center mt-1">Đang tìm kiếm sản phẩm...</p>
                             </div>
-                            <div id="noResult" class="no-result justify-content-center border p-3"
+                            <div id="noResult" class="no-result justify-content-center  text-center border p-3 "
                                 v-if="statusSearchProduct == 3">
                                 <img width="80px" class="mx-auto" src="../../../public/img/no-data.png" alt="">
                                 <p class="text-center mt-1">Không tìm thấy sản phẩm với mã barcode này!</p>
                             </div>
-                            <div :class="`product-details ${statusSearchProduct == 2 ? 'show' : 'hidden'}`">
+                            <div :class="`product-details  ${statusSearchProduct == 2 ? 'show' : 'hidden'}`">
                                 <div class="clearfix"></div>
-                                <table class="table table-bordered">
+                                <h5 class="text-center p-2">Thông tin sản phẩm tìm</h5>
+                                <table class="table table-bordered  mb-0 ">
                                     <tbody>
                                         <tr>
                                             <td style="width: 150px;" scope="col">Tên sản phẩm</td>
@@ -236,13 +169,13 @@
             </div>
 
             <!-- Recent Searches Panel -->
-            <div class="panel">
+            <div class="panel  shadow-sm " v-if="dataHistory.length > 0">
                 <div class="panel-header">
                     Lịch sử tìm kiếm gần đây
                 </div>
                 <div class="">
                     <div class="table-container">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered ">
                             <thead>
                                 <tr>
                                     <th width="30%">Mã Barcode</th>
@@ -287,7 +220,7 @@
         } = require('electron');
         const { generateMixedBarcode } = require('./../../../public/js/functions');
         const $ = require('jquery');
-        
+
         const firestoreService = require('./../../../public/js/firestoreService.js');
         const COLLECTION_PRODUCT = 'products';
 
@@ -297,7 +230,7 @@
         createApp({
             data() {
                 return {
-                    inputSearch: 'IJCV5AP0QD31K1ET20O6GV1E60CK16FF',
+                    inputSearch: '',
                     isLoading: false,
                     statusSearchProduct: 0, //0 chưa tìm, 1 đang tìm, 2 tìm thấy, 3 không tìm thấy
                     infomationDataSearch: {
@@ -314,7 +247,7 @@
             },
             watch: {
                 inputSearch(newValue, oldValue) {
-                    if (newValue.length == 32) {
+                    if (newValue.length >= 32) {
                         this.handleSearchProduct();
                     }
                 }
@@ -375,9 +308,8 @@
                             height: 300,
                             width: 4
                         });
-                        if (!this.dataHistory.some(item => item.barcode === data.barcode)) {
-                            this.dataHistory.unshift(dataInfo);
-                        }
+
+                        await this.addToSearchHistory(dataInfo)
                     } else {
                         this.statusSearchProduct = 3
                     }
@@ -413,7 +345,25 @@
                 async CountDocument() {
                     this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_PRODUCT, []);
                 },
+                async addToSearchHistory(term) {
+                    // Nếu từ khóa đã tồn tại, xóa nó đi (để sau khi thêm lại sẽ ở vị trí mới nhất)
 
+                    const existingIndex = this.dataHistory.findIndex(item => item.barcode === term.barcode);
+                    if (existingIndex !== -1) {
+                        this.dataHistory.splice(existingIndex, 1); // Xóa item cũ bị trùng
+                    }
+
+                    // Thêm vào cuối mảng (là mục mới nhất)
+                    this.dataHistory.unshift(term);
+
+                    // Giới hạn số lượng lịch sử (ví dụ: chỉ giữ 10 mục)
+                    if (this.dataHistory.length > 10) {
+                        this.dataHistory = this.dataHistory.slice(0, 10);
+                    }
+
+                    await ipcRenderer.invoke('save-search-history', JSON.parse(JSON.stringify(this.dataHistory)));
+
+                }
             },
             async mounted() {
                 let sef = this;
@@ -425,6 +375,9 @@
                 ipcRenderer.on('app_version', (event, arg) => {
                     this.appVersion = arg.version;
                 });
+
+                this.dataHistory = await ipcRenderer.invoke('get-search-history');
+
             },
         }).mount('#aplicationProduct');
 

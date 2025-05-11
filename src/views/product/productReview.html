@@ -55,45 +55,58 @@
 </head>
 
 <body class="loading">
-    <div class="px-3 mt-4" id="aplicationProduct">
-        <div class="header-title">Thông Tin Sản Phẩm</div>
+    <div class="" id="aplicationProduct">
+        <div class="content-area">
 
-        <table class="table table-bordered">
-            <tbody>
-                <tr>
-                    <td style="width: 150px;" scope="col">Tên sản phẩm</td>
-                    <td scope="row" class="title">{{title}}</td>
-                </tr>
-                <tr>
-                    <td scope="col">Mô tả</th>
-                    <td class="title">{{description}}</td>
-                </tr>
-                <tr>
-                    <td scope="col">Ngày hết hạn</td>
-                    <td class="title">{{convertTimestampToDate}}</td>
-                </tr>
-                <tr>
-                    <td scope="col">Barcode</td>
-                    <td class="title">
-                        <div id="Barcode" :class="`showBarcode w-full mx-auto   p-2 bg-white ${!title ? 'hidden' :''}`">
-                            <p class="text-[14px] text-center">{{title}}</p>
-                            <svg ref="barcode" class="w-full h-auto"></svg>
-                            <p class="text-[14px] text-center">{{barcode}}</p>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+            <div class="panel shadow-sm ">
+                <div class="panel-header">
+                    Nhập mã barcode
+                </div>
+                <div class="panel-body">
+                    <div class="header-title">Thông Tin Sản Phẩm</div>
 
-        <div class="clearfix"></div>
-        <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center">
-            <button @click="handleSubmitPrint" class="btn btn-info btn-app "><i class="fa-solid fa-print"></i> In
-                Barcode</button>
-            <button @click="handleSubmitEdit" class="btn btn-warning btn-app"><i
-                    class="fa-regular fa-pen-to-square"></i> Sửa</button>
-            
-            <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i class="fa-solid fa-xmark"></i>
-                        Thoát</butto
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <td style="width: 150px;" scope="col">Tên sản phẩm</td>
+                                <td scope="row" class="title">{{title}}</td>
+                            </tr>
+                            <tr>
+                                <td scope="col">Mô tả</th>
+                                <td class="title">{{description}}</td>
+                            </tr>
+                            <tr>
+                                <td scope="col">Ngày hết hạn</td>
+                                <td class="title">{{convertTimestampToDate}}</td>
+                            </tr>
+                            <tr>
+                                <td scope="col">Barcode</td>
+                                <td class="title">
+                                    <div id="Barcode"
+                                        :class="`showBarcode w-full mx-auto   p-2 bg-white ${!title ? 'hidden' :''}`">
+                                        <p class="text-[14px] text-center">{{title}}</p>
+                                        <svg ref="barcode" class="w-full h-auto"></svg>
+                                        <p class="text-[14px] text-center">{{barcode}}</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="clearfix"></div>
+                    <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center">
+                        <button @click="handleSubmitPrint" class="btn btn-info btn-app "><i
+                                class="fa-solid fa-print"></i> In
+                            Barcode</button>
+                        <button @click="handleSubmitEdit" class="btn btn-warning btn-app"><i
+                                class="fa-regular fa-pen-to-square"></i> Sửa</button>
+
+                        <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i
+                                class="fa-solid fa-xmark"></i>
+                            Thoát</butto>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -179,8 +192,8 @@
                     ipcRenderer.invoke('confirm-dialog').then(async confirmed => {
                         if (confirmed) {
                             let statusDelete = await firestoreService.deleteDocument(COLLECTION_PRODUCT, this.id);
-                            if (statusDelete){
-                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!','mainWindow');
+                            if (statusDelete) {
+                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!', 'mainWindow');
                                 ipcRenderer.send('close-window', 'window_review_product');
                             }
                         }
@@ -192,7 +205,7 @@
             },
             computed: {
                 convertTimestampToDate() {
-                    if (this.expiryDate){
+                    if (this.expiryDate) {
                         return moment(this.expiryDate).format('DD/MM/YYYY')
                     }
                     return ''

@@ -3,19 +3,23 @@ body {
     padding: 0;
     overflow-x: hidden;
     font-size: 12px;
+    background: #f5f5f5;
 }
+
+
 body.loading::after {
     content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #fff;
-      z-index: 9999;
-      overflow: hidden;
-  }
-  body.loading::before {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fff;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+body.loading::before {
     content: "";
     position: fixed;
     top: 50%;
@@ -28,13 +32,14 @@ body.loading::after {
     border-radius: 50%;
     animation: spin 1s linear infinite;
     z-index: 10000;
-  }
+}
 
-  @keyframes spin {
+@keyframes spin {
     to {
-      transform: rotate(360deg);
+        transform: rotate(360deg);
     }
-  }
+}
+
 p {
     margin: 0;
 }
@@ -78,8 +83,6 @@ body {
     box-sizing: border-box;
     margin: 0;
     font-family: sans-serif;
-    background-color: #FFF;
-    text-align: center;
 }
 
 #notification {
@@ -110,31 +113,71 @@ body {
 .hidden {
     display: none;
 }
-.w-full{
+
+.w-full {
     width: 100%;
-} 
-.mx-auto{
+}
+
+.mx-auto {
     margin-left: auto;
     margin-right: auto;
 }
-.text-[14px]{
+
+.text-[14px] {
     font: size 14px;
 }
-.text-red{
+
+.text-red {
     color: red;
     text-align: center;
     height: auto;
 }
+
 .ellipsis {
-    white-space: nowrap;         /* Không xuống dòng */
-    overflow: hidden;            /* Ẩn phần vượt quá */
-    text-overflow: ellipsis;     /* Hiển thị "..." */
+    white-space: nowrap;
+    /* Không xuống dòng */
+    overflow: hidden;
+    /* Ẩn phần vượt quá */
+    text-overflow: ellipsis;
+    /* Hiển thị "..." */
     display: block;
-  }
-  button:disabled {
+}
+
+button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-  }
-  table td{
+}
+
+table td {
     vertical-align: middle;
-  }
+}
+
+.panel {
+    background-color: white;
+    overflow: hidden;
+}
+
+.panel-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid #f7f7f7;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e3e3e3;
+}
+
+.panel-body {
+    padding: 15px;
+}
+
+.content-area {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-radius: 5px;
+}

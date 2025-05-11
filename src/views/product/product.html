@@ -22,13 +22,51 @@
 
 <body class="loading">
 
-    <div class="px-3 mt-4" id="aplicationProduct">
+    <div class="px-3 pt-4" id="aplicationProduct">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="justify-content-between">📦 Quản lý sản phẩm</h4>
             <div>
-                <button class="btn btn-primary me-2" @click="handleModelProduct">
-                    <i class="fa fa-plus"></i> Thêm
+                <button class="btn btn-success me-2" @click="handleModelProduct">
+                    <i class="fa fa-plus"></i> Thêm sản phẩm
                 </button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="row g-2">
+
+                <div class="col-md-4">
+                    <label class="form-label mb-0" for="productName">Tên sản phẩm</label>
+                    <input v-model="search.title" type="text" class="form-control" id="productName" name="productName"
+                        placeholder="Nhập tên sản phẩm">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label mb-0" for="barcode">Mã barcode</label>
+                    <input v-model="search.barcode" type="text" class="form-control" id="barcode" name="barcode"
+                        placeholder="Nhập mã barcode">
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label mb-0" for="expiryDate">Hạn sử dụng</label>
+                    <select v-model="search.expiryDate" class="form-control">
+                        <option value="">Tất cả</option>
+                        <option value="active">Còn hạn sử dụng</option>
+                        <option value="finish">Hết hạn sử dụng</option>
+                    </select>
+                </div>
+
+                <!-- Nút tìm -->
+                <div class="col-md-2">
+                    <button v-if="search.title || search.barcode || search.expiryDate" @click="handleSubmitSearch"
+                        class="btn btn-primary rounded-1" style="height: 38px;  margin-top: 18px "><i
+                            class="fa-solid fa-magnifying-glass"></i> Tìm</button>
+                    <button v-else disabled class="btn btn-primary rounded-1"
+                        style="height: 38px;  margin-top: 18px "><i class="fa-solid fa-magnifying-glass"></i>
+                        Tìm</button>
+                    <button @click="handleSubmitRefrechSearch" class="btn btn-primary rounded-1"
+                        style="height: 38px;  margin-top: 18px; margin-left:5px"><i
+                            class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
             </div>
         </div>
 
@@ -52,12 +90,13 @@
                     <td colspan="6" class="text-center">Loading...</td>
                 </tr>
                 <tr v-for="(item, index) in data" :key="index" v-else>
-                    <td>{{index+1}}</td>
+                    <td class="text-center">{{index+1}}</td>
                     <td><span class="ellipsis" style="width: 180px;">{{item.title}}</span></td>
-                    <td :class="convertTimestampToDate(item.expiryDate).status == 'active' ? 'text-success' : ''">
+                    <td
+                        :class=" convertTimestampToDate(item.expiryDate).status == 'active' ? 'text-success fw-bold' : 'text-danger fw-bold'">
                         {{convertTimestampToDate(item.expiryDate).date}}</td>
                     <td class=""><span class="ellipsis" style="width: 170px;">{{item.description}}</span></td>
-                    <td style="width: 280px;">
+                    <td style="width: 240px;">
                         <div :ref="'barcode-' + index" style="width: 100%;"
                             class="showBarcode w-full mx-auto   p-2 bg-white">
                             <p class="text-[14px] text-center ellipsis"
@@ -121,7 +160,7 @@
         const {
             ipcRenderer
         } = require('electron');
-        
+
         const { generateMixedBarcode } = require('./../../../public/js/functions');
         const $ = require('jquery');
         const firestoreService = require('./../../../public/js/firestoreService.js');
@@ -133,6 +172,11 @@
         createApp({
             data() {
                 return {
+                    search: {
+                        title: '',
+                        barcode: '',
+                        expiryDate: '',
+                    },
                     lastVisible: {},
                     firstVisible: {},
                     pageHistory: [],
@@ -155,6 +199,39 @@
 
             },
             methods: {
+                async handleSubmitSearch() {
+                    try {
+                        this.whereConditions = []
+                        if (this.search.title) {
+                            this.whereConditions.push(["title", "==", this.search.title])
+                        }
+                        if (this.search.barcode) {
+                            this.whereConditions.push(["barcode", "==", this.search.barcode])
+                        }
+                        if (this.search.expiryDate) {
+                            let timestampDate = moment().unix() * 1000;
+                            let arraySearchexpiryDate;
+                            if (this.search.expiryDate == 'active') {
+                                arraySearchexpiryDate = ["expiryDate", ">=", timestampDate]
+                            } else {
+                                arraySearchexpiryDate = ["expiryDate", "<", timestampDate]
+                            }
+                            this.whereConditions.push(arraySearchexpiryDate);
+                        }
+                        
+                        await this.CountDocument();
+                        await this.loadDataPage();
+                    } catch (e) {
+                        console.log(e)
+                    }
+
+                },
+                handleSubmitRefrechSearch() {
+                    this.search.title = '';
+                    this.search.barcode = '';
+                    this.search.expiryDate = '';
+                    this.initLoad()
+                },
                 printBarcode(index) {
                     const el = this.$refs['barcode-' + index][0]; // do $refs là array nếu dùng trong v-for
                     const svgHtml = el.outerHTML;
@@ -200,8 +277,8 @@
                             format: "CODE128",
                             displayValue: false,
                             fontSize: 80,
-                            height: 300,
-                            width: 4
+                            height: 130,
+                            width: 3
                         });
                     }
                 },
@@ -261,7 +338,7 @@
                             let statusDelete = await firestoreService.deleteDocument(COLLECTION_PRODUCT, this.data[index].id);
                             if (statusDelete) {
                                 ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!', 'mainWindow');
-                                ipcRenderer.send('close-window', 'window_review_product');
+                                //ipcRenderer.send('close-window', 'window_review_product');
                             }
                         }
                     })
@@ -273,7 +350,8 @@
                     });
                 },
                 async CountDocument() {
-                    this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_PRODUCT, []);
+                    this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_PRODUCT, this.whereConditions);
+                    
                 },
                 async loadDataPage(type = null) {
                     this.isLoading = true;
@@ -353,16 +431,18 @@
                     this.totalDocument = 0;
                     this.data = [];
                     this.isLoading = true;
+                },
+                async initLoad() {
+                    let sef = this;
+                    await firestoreService.subscribeToCollection(COLLECTION_PRODUCT, async function (data) {
+                        sef.ResetConfig();
+                        await sef.CountDocument();
+                        await sef.loadDataPage();
+                    });
                 }
             },
             async mounted() {
-                let sef = this;
-                await firestoreService.subscribeToCollection(COLLECTION_PRODUCT, async function (data) {
-                    sef.ResetConfig();
-                    await sef.CountDocument();
-                    await sef.loadDataPage();
-                });
-
+                this.initLoad()
             },
         }).mount('#aplicationProduct');
 

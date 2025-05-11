@@ -4,24 +4,12 @@ const {
 const { generateMixedBarcode } = require('./functions');
 const $ = require('jquery');
 
-console.log(generateMixedBarcode());
-
-const DB = require('./db.js');
-const AccountTable = new DB('kdb_account');
-
 
 const version = document.getElementById('version');
 const notification = document.getElementById('notification');
 const message = document.getElementById('message');
 const restartButton = document.getElementById('restart-button');
 
-
-ipcRenderer.send('app_version');
-ipcRenderer.on('app_version', (event, arg) => {
-    ipcRenderer.removeAllListeners('app_version');
-    console.log(arg.version);
-    version.innerText = 'Version ' + arg.version;
-});
 
 ipcRenderer.on('update_available', () => {
     ipcRenderer.removeAllListeners('update_available');

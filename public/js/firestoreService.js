@@ -14,7 +14,8 @@ const {
     onSnapshot,
     getCountFromServer,
     startAfter,
-    startAt
+    startAt,
+    or
 } = require('firebase/firestore');
 const moment = require('moment');
 const firebaseConfig = require('./firebaseConfig');
@@ -267,9 +268,31 @@ class FirestoreService {
         try {
             const colRef = collection(db, collectionName);
             let q = query(colRef);
+            let combinedQueries = [];
             whereConditions.forEach(condition => {
                 const [field, operator, value] = condition;
-                q = query(q, where(field, operator, value));
+                /*if (field == 'title') {
+                    const titleLowerCase = value.toLowerCase();
+                    combinedQueries.push(
+                        or(
+                            where('title', '>=', titleLowerCase),
+                            where('title', '<=', titleLowerCase + '\uf8ff')
+                        )
+                    );
+                }
+                if (field == 'barcode') {
+                    const barcodeLowerCase = value.toLowerCase();
+                    combinedQueries.push(
+                        or(
+                            where('barcode', '>=', barcodeLowerCase),
+                            where('barcode', '<=', barcodeLowerCase + '\uf8ff')
+                        )
+                    );
+                }
+                if (field == 'expiryDate') {
+                    q = query(q, where(field, operator, value));
+                }*/
+               q = query(q, where(field, operator, value));
             });
 
             q = query(q, orderBy(sort.split('|')[0], sort.split('|')[1] == "asc" ? "asc" : "desc"), limit(pageSize));
@@ -279,7 +302,9 @@ class FirestoreService {
             } else if (type == 'next' && lastVisible) {
                 q = query(q, startAfter(lastVisible));
             }
-
+            if (combinedQueries.length > 0) {
+                q = query(q, ...combinedQueries);
+            }
             const snapshot = await getDocs(q);
 
             const firstDoc = snapshot.docs[0];
