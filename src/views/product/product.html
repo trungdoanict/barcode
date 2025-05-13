@@ -87,7 +87,9 @@
                     <td colspan="6" class="text-center">Không có dữ liệu.</td>
                 </tr>
                 <tr v-if="isLoading">
-                    <td colspan="6" class="text-center">Loading...</td>
+                    <td colspan="6" class="text-center">
+                        <img height="100" src="./../../../public/img/hzk6C.gif" alt="">
+                    </td>
                 </tr>
                 <tr v-for="(item, index) in data" :key="index" v-else>
                     <td class="text-center">{{index+1}}</td>

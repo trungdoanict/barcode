@@ -1,6 +1,6 @@
 {
   "name": "barcode-tool",
-  "version": "4.0.2",
+  "version": "1.0.1",
   "description": "Barcode Tool",
   "main": "main.js",
   "repository": {

@@ -112,17 +112,19 @@ ipcMain.on('update-application', () => {
 
 ipcMain.handle('check-update-version', async (event) => {
     let version = await getLatestVersionFromGitHub('trungdoanict', 'barcode');
-    version = version.replace('v', '');
-    if (version !== app.getVersion()) {
-        return {
-            newVersionStatus: true,
-            newVersion: version
+    if (version) {
+        version = version.replace('v', '');
+        if (version !== app.getVersion()) {
+            return {
+                newVersionStatus: true,
+                newVersion: version
+            }
+        } else {
+            return {
+                newVersionStatus: false
+            }
         }
-    } else {
-        return {
-            newVersionStatus: false
-        }
-    }
+    } else return
 });
 autoUpdater.on('checking-for-update', () => {
     console.log('Đang kiểm tra bản cập nhật...');
