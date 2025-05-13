@@ -57,54 +57,66 @@
 <body class="loading">
     <div class="" id="aplicationProduct">
         <div class="content-area">
-
+            <div class="d-flex justify-content-between align-items-center mb-1">
+            <h4 class="justify-content-between">📦 Các sản phẩm của {{title}}</h4>
+            <div>
+                <button class="btn btn-success me-2" @click="handleModelProduct">
+                    <i class="fa fa-plus"></i> Thêm sản phẩm
+                </button>
+                <button class="btn btn-danger me-2" @click="handleCloseModelProduct">
+                    <i class="fa fa-close"></i> Đóng
+                </button>
+            </div>
+        </div>
             <div class="panel shadow-sm ">
-                <div class="panel-header">
-                    Nhập mã barcode
-                </div>
-                <div class="panel-body">
-                    <div class="header-title">Thông Tin Sản Phẩm</div>
-
-                    <table class="table table-bordered">
+                <div class="">
+                    <table class="table table-bordered bg-white shadow rounded mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên sản phẩm</th>
+                                <th>Hạn dùng</th>
+                                <th>Mã vạch</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
                         <tbody>
-                            <tr>
-                                <td style="width: 150px;" scope="col">Tên sản phẩm</td>
-                                <td scope="row" class="title">{{title}}</td>
+                            <tr v-if="!isLoading && data.length == 0">
+                                <td colspan="6" class="text-center">Không có dữ liệu.</td>
                             </tr>
-                            <tr>
-                                <td scope="col">Mô tả</th>
-                                <td class="title">{{description}}</td>
+                            <tr v-if="isLoading">
+                                <td colspan="6" class="text-center">
+                                    <img height="100" src="./../../../public/img/hzk6C.gif" alt="">
+                                </td>
                             </tr>
-                            <tr>
-                                <td scope="col">Ngày hết hạn</td>
-                                <td class="title">{{convertTimestampToDate}}</td>
-                            </tr>
-                            <tr>
-                                <td scope="col">Barcode</td>
-                                <td class="title">
-                                    <div id="Barcode"
-                                        :class="`showBarcode w-full mx-auto   p-2 bg-white ${!title ? 'hidden' :''}`">
-                                        <p class="text-[14px] text-center">{{title}}</p>
-                                        <svg ref="barcode" class="w-full h-auto"></svg>
-                                        <p class="text-[14px] text-center">{{barcode}}</p>
+                            <tr v-for="(item, index) in data" :key="index" v-else>
+                                <td class="text-center">{{index+1}}</td>
+                                <td><span class="ellipsis" style="width: 160px;">{{item.title}}</span></td>
+                                <td
+                                    :class=" convertTimestampToDate(item.expiryDate).status == 'active' ? 'text-success fw-bold' : 'text-danger fw-bold'">
+                                    {{convertTimestampToDate(item.expiryDate).date}}</td>
+                                <td style="width: 240px;">
+                                    <div :ref="'barcode-' + index" style="width: 100%;"
+                                        class="showBarcode w-full mx-auto   p-2 bg-white">
+                                        <p class="text-[14px] text-center ellipsis"
+                                            style="width: 280px; text-align: center; margin: 0 auto;">{{item.title}}</p>
+                                        <svg :ref="el => setBarcode(el, item.barcode)" class="w-full h-auto"></svg>
+                                        <p class="text-[14px] text-center">{{item.barcode}}</p>
                                     </div>
+
+
+                                </td>
+                                <td style="width: 200px;">
+                                    <button class="btn btn-sm btn-warning me-1" @click="handleEditProduct(index)"><i
+                                            class="fa fa-edit"></i></button>
+                                    <button class="btn btn-sm btn-info me-1" @click="printBarcode(index)"><i
+                                            class="fa-solid fa-print"></i></button>
+                                    <button class="btn btn-sm btn-danger" @click="handleDeleteProduct(index)"><i
+                                            class="fa fa-trash"></i></button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-
-                    <div class="clearfix"></div>
-                    <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center">
-                        <button @click="handleSubmitPrint" class="btn btn-info btn-app "><i
-                                class="fa-solid fa-print"></i> In
-                            Barcode</button>
-                        <button @click="handleSubmitEdit" class="btn btn-warning btn-app"><i
-                                class="fa-regular fa-pen-to-square"></i> Sửa</button>
-
-                        <button @click="handleSubmitCloseProduct" class="btn btn-danger btn-app"><i
-                                class="fa-solid fa-xmark"></i>
-                            Thoát</butto>
-                    </div>
                 </div>
             </div>
         </div>
@@ -122,27 +134,62 @@
         const moment = require('moment');
         const firestoreService = require('./../../../public/js/firestoreService.js');
         const COLLECTION_PRODUCT = 'products';
+        const COLLECTION_CATEGORY = 'categorys';
         const { createApp } = Vue;
         const app = createApp({
 
             data() {
                 return {
-                    id: '',
+                    isLoading: true,
+                    data: [],
                     title: '',
                     description: '',
-                    expiryDate: '',
-                    barcode: ''
+                    categoryId: ''
                 };
             },
             methods: {
-                async handleSubmitPrint() {
-                    const printContents = document.getElementById("Barcode").innerHTML
-                    const printWindow = window.open('', '', 'width=800,height=600')
-                    printWindow.document.write(`
-                        <html>
-                        <head>
-                            <title>In barcode</title>
-                            <style>
+                async updateTotalProduct(){
+                    let dataProducts = await firestoreService.queryDocuments(COLLECTION_PRODUCT, [['categoryId', '==', this.categoryId]]);
+                    let idProduct = await firestoreService.updateDocument(COLLECTION_CATEGORY, this.categoryId, {
+                        numberProduct: dataProducts.length
+                    });
+                },
+                handleCloseModelProduct(){
+                    ipcRenderer.send('close-window', 'window_review_product');
+                },
+                handleModelProduct() {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'create',
+                        data: {
+                            categoryId: this.categoryId
+                        }
+                    });
+                },
+                handleEditProduct(index) {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'edit',
+                        data: {
+                            id: this.data[index].id,
+                            title: this.data[index].title,
+                            expiryDate: this.data[index].expiryDate,
+                            barcode: this.data[index].barcode
+                        }
+                    });
+                },
+                printBarcode(index) {
+                    const el = this.$refs['barcode-' + index][0]; // do $refs là array nếu dùng trong v-for
+                    const svgHtml = el.outerHTML;
+
+                    const popup = window.open('', '_blank', 'width=400,height=300');
+                    popup.document.open();
+                    popup.document.write(`
+                    <html>
+                    <head>
+                        <title>In mã vạch</title>
+                        <style>
+                                body{
+                                text-alin: center;
+                                }
                                .w-full{
                                     width: 100%;
                                 } 
@@ -160,19 +207,13 @@
                                     margin: 0
                                 }
                             </style>
-                        </head>
-                        <body>
-                            ${printContents}
-                            <script>
-                            window.onload = function() {
-                                window.print();
-                                window.onafterprint = () => window.close();
-                            }
-                            <\/script>
-                        </body>
-                        </html>
-                    `)
-                    printWindow.document.close()
+                            </head>
+                            <body onload="window.print(); window.close();">
+                                ${svgHtml}
+                            </body>
+                            </html>
+                    `);
+                    popup.document.close();
                 },
 
                 async handleSubmitEdit() {
@@ -202,37 +243,68 @@
                 async handleSubmitCloseProduct() {
                     ipcRenderer.send('close-window', 'window_review_product');
                 },
-            },
-            computed: {
-                convertTimestampToDate() {
-                    if (this.expiryDate) {
-                        return moment(this.expiryDate).format('DD/MM/YYYY')
+                convertTimestampToDate(dateTimestapm) {
+                    if (dateTimestapm) {
+                        let timestampDate = moment(new Date()).unix() * 1000;
+                        let status = 'finish'
+                        if (parseFloat(dateTimestapm) > parseFloat(timestampDate)) {
+                            status = 'active'
+                        }
+                        return {
+                            status,
+                            date: moment(dateTimestapm).format('DD/MM/YYYY')
+                        }
                     }
                     return ''
-                }
+
+                },
+                setBarcode(el, code) {
+                    if (el && code) {
+                        JsBarcode(el, code, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 190,
+                            width: 3
+                        });
+                    }
+                },
+                handleDeleteProduct(index) {
+                    ipcRenderer.invoke('confirm-dialog').then(async confirmed => {
+                        if (confirmed) {
+                            let statusDelete = await firestoreService.deleteDocument(COLLECTION_PRODUCT, this.data[index].id);
+                            if (statusDelete) {
+                                this.updateTotalProduct()
+                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!', 'mainWindow');
+                            }
+                        }
+                    })
+                },
             },
-            mounted() {
+            computed: {
 
             },
+            async mounted() {
+                let sef = this;
+                await firestoreService.subscribeToCollection(COLLECTION_PRODUCT, async function async (data) {
+                    let dataProducts = await firestoreService.queryDocuments(COLLECTION_PRODUCT, [['categoryId', '==', sef.categoryId]]);
+                    vm.data = dataProducts;
+                });
+            },
             watch: {
-                barcode(newValue, oldValue) {
-                    JsBarcode(this.$refs.barcode, this.barcode, {
-                        format: "CODE128",
-                        displayValue: false,
-                        fontSize: 80,
-                        height: 300,
-                        width: 4
-                    });
-                }
+
             }
         })
         const vm = app.mount('#aplicationProduct');
-        ipcRenderer.on('data-from-product-review', (event, data) => {
-            vm.id = data.id;
+        ipcRenderer.on('data-from-product-review', async (event, data) => {
+            vm.categoryId = data.categoryId;
             vm.title = data.title;
             vm.description = data.description;
-            vm.expiryDate = data.expiryDate ? data.expiryDate : '';
-            vm.barcode = data.barcode;
+            vm.numberProduct = data.numberProduct;
+
+            let dataProducts = await firestoreService.queryDocuments(COLLECTION_PRODUCT, [['categoryId', '==', data.categoryId]]);
+            vm.data = dataProducts;
+            vm.isLoading = false;
         });
     </script>
 </body>

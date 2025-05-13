@@ -47,9 +47,9 @@ class FirestoreService {
     }
 
     // Lấy tất cả documents trong một collection
-    async getAllDocuments(collectionName) {
+    async getAllDocumentsByCategoryId(collectionName, categoryId) {
         try {
-            const querySnapshot = await getDocs(collection(this.db, collectionName));
+            const querySnapshot = await getDocs(collection(this.db, collectionName), where('categoryId', '==', categoryId));
             const documents = [];
             querySnapshot.forEach((doc) => {
                 documents.push({
@@ -113,6 +113,27 @@ class FirestoreService {
         }
     }
 
+    //xóa theo category
+    async deleteProductsByCategory(collectionName, categoryId) {
+        try {
+            const productsRef = collection(this.db, collectionName);
+            const q = query(productsRef, where('categoryId', '==', categoryId));
+            const querySnapshot = await getDocs(q);
+
+            const deletePromises = querySnapshot.docs.map((docSnap) =>
+                deleteDoc(doc(this.db, collectionName, docSnap.id))
+            );
+
+            await Promise.all(deletePromises);
+            console.log(`✅ Đã xóa ${querySnapshot.size} sản phẩm thuộc categoryId: ${categoryId}`);
+            return true;
+
+        } catch (error) {
+            console.error('❌ Lỗi khi xóa sản phẩm theo categoryId:', error);
+            throw error;
+        }
+    }
+
     /**
    * Tìm kiếm sản phẩm theo barcode chính xác
    * @param {string} barcode - Mã barcode cần tìm
@@ -163,7 +184,8 @@ class FirestoreService {
                 const constraints = [];
 
                 conditions.forEach(condition => {
-                    constraints.push(where(condition.field, condition.operator, condition.value));
+                    const [field, operator, value] = condition;
+                    constraints.push(where(field, operator, value));
                 });
 
                 queryRef = query(queryRef, ...constraints);
@@ -292,7 +314,7 @@ class FirestoreService {
                 if (field == 'expiryDate') {
                     q = query(q, where(field, operator, value));
                 }*/
-               q = query(q, where(field, operator, value));
+                q = query(q, where(field, operator, value));
             });
 
             q = query(q, orderBy(sort.split('|')[0], sort.split('|')[1] == "asc" ? "asc" : "desc"), limit(pageSize));

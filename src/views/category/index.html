@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Barcode Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./../../../public/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/awesome.min.css" rel="stylesheet" />
+    <link href="./../../../public/css/style.css" rel="stylesheet" />
+    <style>
+        table td {
+            vertical-align: middle;
+        }
+
+        .btn.btn-sm {
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body class="loading">
+
+    <div class="px-3 pt-4" id="aplicationProduct">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="justify-content-between">📦 Quản lý sản phẩm</h4>
+            <div>
+                <button class="btn btn-success me-2" @click="handleModelCategory">
+                    <i class="fa fa-plus"></i> Thêm sản phẩm
+                </button>
+            </div>
+        </div>
+        <div class="mb-3">
+            <div class="row g-2">
+
+                <div class="col-md-4">
+                    <label class="form-label mb-0" for="productName">Tên sản phẩm</label>
+                    <input v-model="search.title" type="text" class="form-control" id="productName" name="productName"
+                        placeholder="Nhập tên sản phẩm">
+                </div>
+
+                <!-- Nút tìm -->
+                <div class="col-md-2">
+                    <button v-if="search.title || search.barcode || search.expiryDate" @click="handleSubmitSearch"
+                        class="btn btn-primary rounded-1" style="height: 38px;  margin-top: 18px "><i
+                            class="fa-solid fa-magnifying-glass"></i> Tìm</button>
+                    <button v-else disabled class="btn btn-primary rounded-1"
+                        style="height: 38px;  margin-top: 18px "><i class="fa-solid fa-magnifying-glass"></i>
+                        Tìm</button>
+                    <button @click="handleSubmitRefrechSearch" class="btn btn-primary rounded-1"
+                        style="height: 38px;  margin-top: 18px; margin-left:5px"><i
+                            class="fa-solid fa-arrows-rotate"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <table class="table table-bordered bg-white shadow rounded">
+            <thead class="table-light">
+                <tr>
+                    <th>STT</th>
+                    <th>Tên sản phẩm</th>
+                    <th>Mô tả</th>
+                    <th>Số lượng Barcode</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-if="!isLoading && data.length == 0">
+                    <td colspan="6" class="text-center">Không có dữ liệu.</td>
+                </tr>
+                <tr v-if="isLoading">
+                    <td colspan="6" class="text-center">
+                        <img height="100" src="./../../../public/img/hzk6C.gif" alt="">
+                    </td>
+                </tr>
+                <tr v-for="(item, index) in data" :key="index" v-else>
+                    <td class="text-center">{{index+1}}</td>
+                    <td><span class="ellipsis" style="width: 180px;">{{item.title}}</span></td>
+                    <td class=""><span class="ellipsis" style="width: 170px;">{{item.description}}</span></td>
+                    <td><span class="ellipsis" >{{item.numberProduct}}</span></td>
+                    <td style="width: 200px;">
+                        <button class="btn btn-sm btn-warning me-1" @click="handleEditCategory(index)"><i
+                                class="fa fa-edit"></i></button>
+                        <button class="btn btn-sm btn-secondary me-1" @click="handleReviewProduct(index)"><i
+                                class="fa-solid fa-eye"></i></button>
+                        <button class="btn btn-sm btn-danger" @click="handleDeleteCategory(index)"><i
+                                class="fa fa-trash"></i></button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class='d-flex flex-row justify-content-between p-[15px] mb-4'>
+            <div class='d-flex flex-row align-items-center gap-1'>
+                <span class=' align-items-center'>Rows</span>
+                <select v-model="pageSize" @change="changePageSize"
+                    class=' py-1 rounded-md border border-[#E5E7EB] text-[14px]'>
+                    <option value='10'>10</option>
+                    <option value='20'>20</option>
+                    <option value='40'>40</option>
+                    <option value='60'>60</option>
+                    <option value='80'>80</option>
+                    <option value='100'>100</option>
+                </select>
+                <span class='align-items-center'> / {{totalDocument}}</span>
+            </div>
+
+            <div class='text-center gap-1 d-flex flex-row align-items-center'>
+                <button
+                    class='align-items-center border px-3 pt-[5px] d-flex flex-row gap-1 rounded-md hover:bg-[#e7e5e5] disabled:opacity-75 disabled:hover:bg-[#fff] disabled:cursor-not-allowed'
+                    @click="handlePrev" :disabled="currentPage===1">
+                    <span>Prev</span>
+                </button>
+                <span class='py-1 align-items-center'>{{currentPage}}/{{Math.ceil(totalDocument / pageSize)}}</span>
+                <button
+                    class='align-items-center border px-3 pt-[5px]  d-flex flex-row rounded-md hover:bg-[#e7e5e5] disabled:opacity-75 disabled:hover:bg-[#fff] disabled:cursor-not-allowed'
+                    @click="handleNext" :disabled="isNextDisabled"><span>Next</span>
+
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="text/javascript" src="./../../../public/js/vue.global.js"></script>
+    <script>
+        const moment = require('moment');
+        const JsBarcode = require('jsbarcode');
+        const {
+            ipcRenderer
+        } = require('electron');
+
+        const { generateMixedBarcode } = require('./../../../public/js/functions');
+        const $ = require('jquery');
+        const firestoreService = require('./../../../public/js/firestoreService.js');
+        const COLLECTION_CATEGORY = 'categorys';
+        const COLLECTION_PRODUCT = 'products';
+        const DB = require('./../../../public/js/db.js');
+        const AccountTable = new DB('kdb_account');
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    search: {
+                        title: '',
+                    },
+                    lastVisible: {},
+                    firstVisible: {},
+                    pageHistory: [],
+                    whereConditions: [],
+                    orderBy: "createdAt|desc",
+                    currentPage: 1,
+                    pageSize: 10,
+                    isNextDisabled: false,
+                    totalDocument: 0,
+                    data: [],
+                    isLoading: true
+                };
+            },
+            watch: {
+                pageSize(newValue, oldValue) {
+                    this.loadDataPage();
+                }
+            },
+            computed: {
+
+            },
+            methods: {
+                async handleSubmitSearch() {
+                    try {
+                        this.whereConditions = []
+                        if (this.search.title) {
+                            this.whereConditions.push(["title", "==", this.search.title])
+                        }
+                        await this.CountDocument();
+                        await this.loadDataPage();
+                    } catch (e) {
+                        console.log(e)
+                    }
+
+                },
+                handleSubmitRefrechSearch() {
+                    this.search.title = '';
+                    this.initLoad()
+                },
+                printBarcode(index) {
+                    const el = this.$refs['barcode-' + index][0]; // do $refs là array nếu dùng trong v-for
+                    const svgHtml = el.outerHTML;
+
+                    const popup = window.open('', '_blank', 'width=400,height=300');
+                    popup.document.open();
+                    popup.document.write(`
+                    <html>
+                    <head>
+                        <title>In mã vạch</title>
+                        <style>
+                                body{
+                                text-alin: center;
+                                }
+                               .w-full{
+                                    width: 100%;
+                                } 
+                                .mx-auto{
+                                    margin-left: auto;
+                                    margin-right: auto;
+                                }
+                                .text-center{
+                                    text-align: center;         
+                                }
+                                .h-auto{
+                                            height: auto;             
+                                }
+                                p{
+                                    margin: 0
+                                }
+                            </style>
+                            </head>
+                            <body onload="window.print(); window.close();">
+                                ${svgHtml}
+                            </body>
+                            </html>
+                    `);
+                    popup.document.close();
+                },
+                setBarcode(el, code) {
+                    if (el && code) {
+                        JsBarcode(el, code, {
+                            format: "CODE128",
+                            displayValue: false,
+                            fontSize: 80,
+                            height: 130,
+                            width: 3
+                        });
+                    }
+                },
+                convertTimestampToDate(dateTimestapm) {
+                    if (dateTimestapm) {
+                        let timestampDate = moment(new Date()).unix() * 1000;
+                        let status = 'finish'
+                        if (parseFloat(dateTimestapm) > parseFloat(timestampDate)) {
+                            status = 'active'
+                        }
+                        return {
+                            status,
+                            date: moment(dateTimestapm).format('DD/MM/YYYY')
+                        }
+                    }
+                    return ''
+
+                },
+                handlePrev() {
+                    if (this.currentPage > 1) {
+                        this.loadDataPage('prev');
+                    }
+                },
+                handleNext() {
+                    this.loadDataPage('next');
+                },
+                changePageSize() {
+                    this.currentPage = 1;
+                    this.lastVisible = null;
+                    this.firstVisible = null;
+                    this.pageHistory = [];
+                },
+                handleReviewProduct(index) {
+                    ipcRenderer.send('show_modal_review_product', {
+                        categoryId: this.data[index].id,
+                        title: this.data[index].title,
+                        description: this.data[index].description,
+                        numberProduct: this.data[index].numberProduct
+                    });
+                },
+                handleEditCategory(index) {
+                    ipcRenderer.send('show_modal_input_category', {
+                        type: 'edit',
+                        data: {
+                            id: this.data[index].id,
+                            title: this.data[index].title,
+                            description: this.data[index].description
+                        }
+                    });
+                },
+                handleEditProduct(index) {
+                    ipcRenderer.send('show_modal_input_product', {
+                        type: 'edit',
+                        data: {
+                            id: this.data[index].id,
+                            title: this.data[index].title,
+                            description: this.data[index].description,
+                            expiryDate: this.data[index].expiryDate,
+                            barcode: this.data[index].barcode
+                        }
+                    });
+                },
+                handleDeleteCategory(index) {
+                    let id_delete = this.data[index].id;
+                    ipcRenderer.invoke('confirm-dialog').then(async confirmed => {
+                        if (confirmed) {
+                            let statusDelete = await firestoreService.deleteDocument(COLLECTION_CATEGORY, id_delete);
+                            if (statusDelete) {
+                                await firestoreService.deleteProductsByCategory(COLLECTION_PRODUCT, id_delete);
+                                ipcRenderer.invoke('show-success-dialog', 'Xóa sản phẩm thành công!', 'mainWindow');
+                                //ipcRenderer.send('close-window', 'window_review_product');
+                            }
+                        }
+                    })
+                },
+                handleModelCategory() {
+                    ipcRenderer.send('show_modal_input_category', {
+                        type: 'create',
+                        data: {}
+                    });
+                },
+                async CountDocument() {
+                    this.totalDocument = await firestoreService.GetCountDocument(COLLECTION_CATEGORY, this.whereConditions);
+                    
+                },
+                async loadDataPage(type = null) {
+                    this.isLoading = true;
+                    let queryLastVisible;
+                    let queryFirstVisible
+                    if (!type) {
+                        queryLastVisible = null;
+                        queryFirstVisible = null;
+                    }
+                    if (type == 'next') {
+                        queryLastVisible = this.lastVisible;
+                        queryFirstVisible = this.firstVisible;
+                    }
+                    if (type == 'prev') {
+                        queryLastVisible = this.pageHistory[this.pageHistory.length - 1]?.lastVisible;
+                        queryFirstVisible = this.pageHistory[this.pageHistory.length - 1]?.firstVisible;
+                        if (this.pageHistory.length > 1) {
+                            const previousPage = this.pageHistory[this.pageHistory.length - 2];
+                            queryLastVisible = previousPage.lastVisible;
+                            queryFirstVisible = previousPage.firstVisible;
+                        }
+                    }
+                    const result = await firestoreService.getPaginatedData(
+                        COLLECTION_CATEGORY,
+                        this.whereConditions,
+                        this.orderBy,
+                        this.pageSize,
+                        queryLastVisible,
+                        queryFirstVisible,
+                        type
+                    );
+                    this.data = result.data;
+                    this.lastVisible = result.lastVisible;
+                    this.firstVisible = result.firstVisible;
+
+                    if (type != 'prev') {
+                        this.pageHistory = [...this.pageHistory, { lastVisible: result.lastVisible, firstVisible: result.firstVisible }];
+                    }
+                    if (type == 'next') {
+                        this.currentPage = this.currentPage + 1;
+                    }
+                    if (type == 'prev') {
+                        this.pageHistory = this.pageHistory.slice(0, -1);
+                        this.currentPage = this.currentPage - 1;
+                    }
+
+                    //check next disable
+                    if (result.data.length < this.pageSize) {
+                        this.isNextDisabled = true;
+                    } else {
+                        const nextCheck = await firestoreService.getPaginatedData(
+                            COLLECTION_CATEGORY,
+                            this.whereConditions,
+                            this.orderBy,
+                            this.pageSize,
+                            result.lastVisible,
+                            //isPrev: false,
+                        );
+
+                        if (nextCheck.data.length === 0) {
+                            this.isNextDisabled = true;
+                        } else {
+                            this.isNextDisabled = false;
+                        }
+                    }
+                    this.isLoading = false;
+                },
+                ResetConfig() {
+                    this.lastVisible = {};
+                    this.firstVisible = {};
+                    this.pageHistory = [];
+                    this.whereConditions = [];
+                    this.orderBy = "createdAt|desc";
+                    this.currentPage = 1;
+                    this.pageSize = 10;
+                    this.isNextDisabled = false;
+                    this.totalDocument = 0;
+                    this.data = [];
+                    this.isLoading = true;
+                },
+                async initLoad() {
+                    let sef = this;
+                    await firestoreService.subscribeToCollection(COLLECTION_CATEGORY, async function (data) {
+                        sef.ResetConfig();
+                        await sef.CountDocument();
+                        await sef.loadDataPage();
+                    });
+                }
+            },
+            async mounted() {
+                this.initLoad()
+            },
+        }).mount('#aplicationProduct');
+
+
+    </script>
+</body>

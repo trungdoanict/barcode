@@ -17,6 +17,7 @@ let fs = require('fs');
 const https = require('https');
 let windowns = {};
 const searchHistoryPath = path.join(app.getPath('userData'), 'search-history.json');
+console.log(searchHistoryPath);
 function createWindow() {
     windowns['mainWindow'] = new BrowserWindow({
         width: 1024,
@@ -31,7 +32,7 @@ function createWindow() {
     });
     windowns['mainWindow'].loadURL(
         url.format({
-            pathname: path.join(__dirname, 'src/views/product/productScan.html'),
+            pathname: path.join(__dirname, 'src/views/category/index.html'),
             protocol: 'file:',
             slashes: true
         })
@@ -195,8 +196,8 @@ function show_window_input_product(data) {
 }
 function show_modal_review_product(data) {
     windowns['window_review_product'] = new BrowserWindow({
-        width: 600,
-        height: 500,
+        width: 1024,
+        height: 700,
         title: 'Thông tin sản phẩm',
         webPreferences: {
             nodeIntegration: true,           // Cho phép sử dụng Node.js trong renderer
@@ -354,3 +355,41 @@ if (process.env.NODE_ENV === 'development') {
         hardResetMethod: 'exit'
     });
 }
+function show_window_input_category(data) {
+    windowns['window_input_category'] = new BrowserWindow({
+        width: 500,
+        height: 440,
+        resizable: false,
+        title: data.type == 'create' ? 'Thêm sản phẩm' : 'Sửa sản phẩm',
+        webPreferences: {
+            nodeIntegration: true,           // Cho phép sử dụng Node.js trong renderer
+            contextIsolation: false,         // Tắt context isolation để cho phép truy cập trực tiếp
+            enableRemoteModule: true        // Cho phép sử dụng remote module
+        },
+        parent: windowns['mainWindow'],
+        modal: true,
+        icon: 'public/img/icon.ico'
+    });
+
+    windowns['window_input_category'].loadURL(
+        url.format({
+            pathname: path.join(__dirname, 'src/views/category/inputItem.html'),
+            protocol: 'file:',
+            slashes: true
+        })
+    );
+    windowns['window_input_category'].setMenuBarVisibility(false);
+    windowns['window_input_category'].webContents.on('did-finish-load', () => {
+        windowns['window_input_category'].webContents.send('data-from-product', data);
+    });
+    if (process.env.NODE_ENV === 'development') {
+        windowns['window_input_category'].webContents.openDevTools();
+    }
+
+    windowns['window_input_category'].on('closed', function () {
+        windowns['window_input_category'] = null;
+    });
+}
+ipcMain.on('show_modal_input_category', (event, data) => {
+    show_window_input_category(data);
+});

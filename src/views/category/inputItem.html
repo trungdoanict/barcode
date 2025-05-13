@@ -54,31 +54,22 @@
                 {{type == 'create' ? 'Tạo Sản Phẩm Mới' : 'Cập nhật Sản Phẩm'}}
             </div>
             <div class="panel-body">
-               
+
                 <div class="mb-2">
                     <label for="productName" class="form-label">Tên sản phẩm</label>
                     <input type="text" v-model="title" class="form-control" required />
                 </div>
 
                 <div class="mb-2">
-                    <label for="expiryDate" class="form-label">Ngày hết hạn</label>
-                    <input type="date" date-format="DD/MM/YYYY" FormatDateTime="dd/MM/YYYY" class="form-control"
-                        v-model="expiryDate" required />
+                    <label for="productDescription" class="form-label">Mô tả</label>
+                    <textarea class="form-control" v-model="description" rows="2"></textarea>
                 </div>
 
-                <div class="mb-2">
-                    <label for="expiryDate" class="form-label">Barcode</label>
-                    <div class="clearfix"></div>
-                    <div
-                        :class="`showBarcode text-center w-full mx-auto  border border-[#eee]-400 rounded p-2 bg-white ${!title ? 'hidden' :''}`">
-                        <p class="text-[14px]">{{title}}</p>
-                        <svg ref="barcode" class="w-full h-auto"></svg>
-                        <p class="text-[14px]">{{barcode}}</p>
-                    </div>
-                    <div class="text-center" v-if="!title">
-                        <span class="text-red">Vui lòng nhập tên sản phẩm để tạo mã Barcode cho sản phẩm!</span>
-                    </div>
+                <div class="mb-2" v-if="type == 'create'">
+                    <label for="productDescription" class="form-label">Số lượng sản phẩm</label>
+                    <input class="form-control" type="number" v-model="numberProduct" />
                 </div>
+
                 <div class="clearfix"></div>
                 <div class="gap-2 mt-4 d-flex center justify-content-center align-items-center "
                     v-if="type == 'create'">
@@ -87,7 +78,7 @@
                         Tạo Sản Phẩm</button>
                     <button disabled class="btn btn-success btn-app" v-else><i class="fa-solid fa-spinner"></i>
                         Đang tạo sản phẩm...</button>
-                    
+
 
                     <button @click="handleSubmitResetInputProduct" class="btn btn-info btn-app"><i
                             class="fa-solid fa-rotate-right"></i> Nhập lại</button>
@@ -115,12 +106,12 @@
         const {
             ipcRenderer
         } = require('electron');
-        const { generateMixedBarcode } = require('./../../../public/js/functions');
+        const { generateCryptoCode } = require('./../../../public/js/functions');
         const $ = require('jquery');
         const moment = require('moment');
         const firestoreService = require('./../../../public/js/firestoreService.js');
-        const COLLECTION_PRODUCT = 'products';
         const COLLECTION_CATEGORY = 'categorys';
+        const COLLECTION_PRODUCT = 'products';
         const { createApp } = Vue;
         const app = createApp({
 
@@ -130,25 +121,18 @@
                     type: '',
                     id: '',
                     title: '',
+                    numberProduct: '',
                     description: '',
-                    expiryDate: '',
-                    barcode: ''
                 };
             },
             methods: {
-                async updateTotalProduct(categoryId){
-                    let dataProducts = await firestoreService.queryDocuments(COLLECTION_PRODUCT, [['categoryId', '==', categoryId]]);
-                    let idProduct = await firestoreService.updateDocument(COLLECTION_CATEGORY, categoryId, {
-                        numberProduct: dataProducts.length
-                    });
-                },
+
                 async handleSubmitResetInputProduct() {
                     this.title = '';
                     this.description = '';
-                    this.expiryDate = '';
                 },
                 async handleSubmitCloseProduct() {
-                    ipcRenderer.send('close-window', 'window_input_product');
+                    ipcRenderer.send('close-window', 'window_input_category');
                 },
                 async handleSubmitEditProduct() {
                     try {
@@ -163,19 +147,16 @@
                             this.isSubmit = false;
                             return;
                         }
-                        
-                        let timestampDate = moment(new Date(this.expiryDate)).unix() * 1000;
 
-                        let idProduct = await firestoreService.updateDocument(COLLECTION_PRODUCT, this.id, {
+                        let idProduct = await firestoreService.updateDocument(COLLECTION_CATEGORY, this.id, {
                             title: this.title,
-                            expiryDate: this.expiryDate ? timestampDate : 0
+                            description: this.description
                         });
-                        console.log(idProduct, timestampDate, this.expiryDate);
-                        ipcRenderer.send('close-window', 'window_input_product');
-                     
-                        ipcRenderer.invoke('show-success-dialog', 'Cập nhật sản phẩm thành công!','mainWindow');
+
+                        ipcRenderer.send('close-window', 'window_input_category');
+                        ipcRenderer.invoke('show-success-dialog', 'Cập nhật sản phẩm thành công!', 'mainWindow');
                         this.title = '';
-                        this.expiryDate = '';
+                        this.description = '';
                         this.isSubmit = false;
                     } catch (error) {
                         this.isSubmit = false;
@@ -191,22 +172,38 @@
                             this.isSubmit = false;
                             return;
                         }
-                        if (!this.barcode) {
-                            ipcRenderer.invoke('show-error-dialog', 'Vui lòng tạo lại sản phẩm. Hệ thống chưa tạo được barcode!');
+                        if (parseInt(this.numberProduct) < 1) {
+                            ipcRenderer.invoke('show-error-dialog', 'Vui lòng nhập số lượng sản phẩm lớn hơn 0.');
+                            this.isSubmit = false;
+                            return;
+                        }
+                        if (parseInt(this.numberProduct) > 300) {
+                            ipcRenderer.invoke('show-error-dialog', 'Vui lòng nhập số lượng sản phẩm nhỏ hơn 300.');
                             this.isSubmit = false;
                             return;
                         }
                         let timestampDate = moment(new Date(this.expiryDate)).unix() * 1000;
-                        let idProduct = await firestoreService.addDocument(COLLECTION_PRODUCT, {
+                        let idCategory = await firestoreService.addDocument(COLLECTION_CATEGORY, {
                             title: this.title,
-                            categoryId: this.categoryId,
-                            expiryDate: this.expiryDate ? timestampDate : 0,
-                            barcode: this.barcode
+                            numberProduct: this.numberProduct,
+                            description: this.description
                         });
-                        this.updateTotalProduct(this.categoryId)
+                        if (idCategory) {
+                            for (let index = 0; index < this.numberProduct; index++) {
+                                let barcode = generateCryptoCode();
+                                let idProduct = await firestoreService.addDocument(COLLECTION_PRODUCT, {
+                                    title: this.title,
+                                    expiryDate: 0,
+                                    categoryId: idCategory,
+                                    barcode: barcode
+                                });
+                                console.log(idProduct);
+                            }
+                        }
                         ipcRenderer.invoke('show-success-dialog', 'Tạo sản phẩm thành công!');
                         this.title = '';
-                        this.expiryDate = '';
+                        this.description = '';
+                        this.numberProduct = '';
                         this.isSubmit = false;
                     } catch (error) {
                         this.isSubmit = false;
@@ -217,19 +214,10 @@
             },
             mounted() {
 
-                this.barcode = generateMixedBarcode();
-                JsBarcode(this.$refs.barcode, this.barcode, {
-                    format: "CODE128",
-                    displayValue: false,
-                    fontSize: 80,
-                    height: 250,
-                    width: 4
-                });
+
             },
             watch: {
-                title(newValue, oldValue) {
 
-                }
             }
         })
         const vm = app.mount('#aplicationProduct');
@@ -239,11 +227,6 @@
                 vm.id = data.data.id;
                 vm.title = data.data.title;
                 vm.description = data.data.description;
-                vm.expiryDate = data.data.expiryDate ? moment(data.data.expiryDate).format('YYYY-MM-DD') : 0;
-                vm.barcode = data.data.barcode;
-            }
-            if (data.type == 'create') {
-                vm.categoryId = data.data.categoryId
             }
         });
 
